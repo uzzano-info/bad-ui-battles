@@ -283,6 +283,44 @@ const rnd = Math.random; // 게임플레이용 진짜 랜덤(룰렛 등)
 /* 레벨마다 맞춰야 할 목표 볼륨%를 랜덤 추첨 (25~75, 5단위 → 모든 레벨에서 도달 가능) */
 function pickTarget(){ return 25 + Math.floor(rnd()*11)*5; }
 
+/* ============ BGM (레벨별 6곡, 반복재생) + 8비트 버튼 SFX ============ */
+// 레벨 순서(LV.1~LV.6)에 맞춰 1곡씩 매칭. (3번째 파일은 원본명이 gbm3.mp3 라 그대로 사용)
+const BGM_FILES = ['bgm1.mp3','bgm2.mp3','gbm3.mp3','bgm4.mp3','bgm5.mp3','bgm6.mp3'];
+const bgmEls = BGM_FILES.map(f=>{ const a=new Audio(f); a.loop=true; a.preload='auto'; a.volume=0.5; return a; });
+let currentBgm=null, audioUnlocked=false;
+function unlockAudio(){
+  if(audioUnlocked) return; audioUnlocked=true;
+  if(currentBgm) currentBgm.play().catch(()=>{});
+}
+['pointerdown','keydown'].forEach(ev=>addEventListener(ev, unlockAudio, {once:true}));
+function playBgmFor(idx){
+  const next = bgmEls[idx % bgmEls.length];
+  if(currentBgm && currentBgm!==next){ currentBgm.pause(); currentBgm.currentTime=0; }
+  currentBgm = next;
+  if(audioUnlocked) currentBgm.play().catch(()=>{});
+}
+function setBgmVolumeFromDisplay(v){
+  if(!currentBgm || v==null || isNaN(v)) return;
+  currentBgm.volume = Math.max(0, Math.min(100, v))/100;   // 볼륨 조절 값 = 실제 BGM 크기
+}
+function stopBgm(){ if(currentBgm){ currentBgm.pause(); } }
+
+let sfxCtx=null;
+function sfx8bit(freq=880, dur=0.05){
+  try{
+    sfxCtx = sfxCtx || new (window.AudioContext||window.webkitAudioContext)();
+    const o=sfxCtx.createOscillator(), g=sfxCtx.createGain();
+    o.type='square'; o.frequency.value=freq; g.gain.value=0.06;
+    g.gain.setValueAtTime(0.06, sfxCtx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.0001, sfxCtx.currentTime+dur);
+    o.connect(g); g.connect(sfxCtx.destination);
+    o.start(); o.stop(sfxCtx.currentTime+dur);
+  }catch(e){}
+}
+document.addEventListener('pointerdown', e=>{
+  if(e.target.closest('button, .knob, label')) sfx8bit(720 + Math.random()*180, 0.05);
+});
+
 /* ============ DOM ============ */
 const panel = document.getElementById('panel');
 const badge = document.getElementById('badge');
@@ -310,6 +348,7 @@ function setReadout(v){
   const hit = (state && state.target!=null && r===state.target);
   readoutEl.innerHTML = `${r}<small>%</small>` + (hit ? ' <small style="color:#0a7a25">✓</small>' : '');
   readoutEl.classList.toggle('hit', !!hit);
+  setBgmVolumeFromDisplay(v);   // 표시값 그대로 실제 BGM 음량에 반영
 }
 function shake(){
   if(reduceMotion) return;
@@ -564,6 +603,7 @@ const LEVELS = [
 
 function showEnding(){
   clearRaf();
+  stopBgm();   // 정복 완료 = 진짜 음소거
   confirmBtn.style.display='none';
   badge.textContent='CLEAR';
   goalEl.textContent='';
@@ -595,6 +635,7 @@ function loadLevel(idx){
   state.levelIndex = idx;
   state.target = level.fixedTarget != null ? level.fixedTarget : pickTarget();  // 목표% 랜덤
   setAccentHue(idx, LEVELS.length);
+  playBgmFor(idx);   // 레벨마다 다른 BGM 반복재생
   // UI 리셋
   confirmBtn.style.display='';
   goalEl.innerHTML=`볼륨을 <span class="goal-target">${state.target}%</span>에 맞추고 확인을 누르세요.`;
