@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Bad UI Battles - Portal</title>
+<style>
+  :root {
+    --accent: #000080;
+    --face: #c0c0c0;
+    --hilite: #ffffff;
+    --light: #dfdfdf;
+    --shadow: #808080;
+    --dark: #000000;
+    --ink: #000000;
+    --ink2: #404040;
+    --desktop: #008080; /* Classic Win95 Teal */
+  }
+
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; }
+
+  body {
+    background: var(--desktop);
+    color: var(--ink);
+    font-family: "MS Sans Serif", "Tahoma", "Apple SD Gothic Neo", "Malgun Gothic", -apple-system, sans-serif;
+    font-size: 13px;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    position: relative;
+    user-select: none;
+  }
+
+  /* 3D Bevel borders */
+  .outset {
+    border: 2px solid;
+    border-color: var(--hilite) var(--dark) var(--dark) var(--hilite);
+    box-shadow: inset 1px 1px 0 var(--face), inset -1px -1px 0 var(--shadow);
+  }
+
+  .inset {
+    border: 2px solid;
+    border-color: var(--shadow) var(--hilite) var(--hilite) var(--shadow);
+    box-shadow: inset 1px 1px 0 var(--dark), inset -1px -1px 0 var(--light);
+  }
+
+  /* Desktop Area */
+  .desktop-area {
+    flex: 1;
+    position: relative;
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: auto;
+  }
+
+  /* Desktop Icons */
+  .desktop-icons {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    z-index: 5;
+  }
+
+  .icon {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 80px;
+    text-align: center;
+    color: white;
+    text-shadow: 1px 1px 1px #000;
+    cursor: pointer;
+    text-decoration: none;
+  }
+
+  .icon img, .icon .icon-placeholder {
+    width: 32px;
+    height: 32px;
+    margin-bottom: 6px;
+  }
+
+  .icon .icon-placeholder {
+    font-size: 32px;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .icon .label {
+    font-size: 11px;
+    word-break: keep-all;
+  }
+
+  .icon:hover .label {
+    background-color: var(--accent);
+    outline: 1px dotted #fff;
+  }
+
+  /* Classic Window */
+  .window {
+    width: 100%;
+    max-width: 460px;
+    background: var(--face);
+    padding: 3px;
+    display: flex;
+    flex-direction: column;
+    animation: zoom 0.15s ease-out;
+  }
+
+  @keyframes zoom {
+    from { transform: scale(0.95); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+  }
+
+  .title-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: linear-gradient(90deg, var(--accent), #1084d0);
+    color: #fff;
+    padding: 3px 4px 3px 6px;
+  }
+
+  .title-bar-text {
+    font-weight: bold;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .title-bar-controls {
+    display: flex;
+    gap: 2px;
+  }
+
+  .title-bar-controls button {
+    width: 16px;
+    height: 14px;
+    font-size: 9px;
+    font-weight: bold;
+    color: var(--ink);
+    background: var(--face);
+    border: 1px solid;
+    border-color: var(--hilite) var(--dark) var(--dark) var(--hilite);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    padding: 0;
+  }
+
+  .title-bar-controls button:active {
+    border-color: var(--dark) var(--hilite) var(--hilite) var(--dark);
+  }
+
+  /* Window Menu */
+  .window-menu {
+    display: flex;
+    padding: 4px 6px;
+    gap: 12px;
+    border-bottom: 1px solid var(--shadow);
+  }
+
+  .window-menu span {
+    cursor: pointer;
+  }
+
+  .window-menu span:first-letter {
+    text-decoration: underline;
+  }
+
+  /* Window Content */
+  .window-body {
+    padding: 15px;
+    overflow-y: auto;
+    max-height: 400px;
+  }
+
+  .welcome-msg {
+    margin-bottom: 15px;
+    font-size: 13px;
+    line-height: 1.4;
+  }
+
+  /* Battle Card Item */
+  .battle-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .battle-item {
+    background: var(--light);
+    padding: 12px;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+  }
+
+  .battle-icon {
+    font-size: 32px;
+    padding: 6px;
+    background: var(--face);
+    flex-shrink: 0;
+  }
+
+  .battle-info {
+    flex: 1;
+  }
+
+  .battle-title {
+    font-weight: bold;
+    font-size: 14px;
+    margin: 0 0 4px 0;
+    color: var(--accent);
+  }
+
+  .battle-desc {
+    font-size: 12px;
+    line-height: 1.4;
+    color: var(--ink2);
+    margin: 0 0 10px 0;
+  }
+
+  .btn {
+    display: inline-block;
+    padding: 6px 14px;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: bold;
+    color: var(--ink);
+    background: var(--face);
+    border: 2px solid;
+    border-color: var(--hilite) var(--dark) var(--dark) var(--hilite);
+    box-shadow: inset 1px 1px 0 var(--face), inset -1px -1px 0 var(--shadow);
+    cursor: pointer;
+    text-decoration: none;
+    text-align: center;
+  }
+
+  .btn:active {
+    border-color: var(--dark) var(--hilite) var(--hilite) var(--dark);
+    box-shadow: inset 1px 1px 0 var(--dark), inset -1px -1px 0 var(--light);
+  }
+
+  /* Taskbar */
+  .taskbar {
+    height: 40px;
+    background: var(--face);
+    border-top: 2px solid var(--hilite);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 2px;
+    z-index: 10;
+  }
+
+  .start-button {
+    font-weight: bold;
+    font-size: 14px;
+    padding: 4px 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    height: 100%;
+  }
+
+  .start-button img {
+    width: 16px;
+    height: 16px;
+  }
+
+  .taskbar-items {
+    flex: 1;
+    display: flex;
+    gap: 4px;
+    margin-left: 10px;
+    height: 100%;
+  }
+
+  .taskbar-tab {
+    width: 150px;
+    height: 100%;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    padding: 0 8px;
+    font-size: 11px;
+    gap: 6px;
+  }
+
+  .system-tray {
+    padding: 4px 8px;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .tray-icons {
+    display: flex;
+    gap: 4px;
+    font-size: 14px;
+  }
+
+  /* Responsive Design */
+  @media (max-width: 480px) {
+    .desktop-icons {
+      flex-direction: row;
+      flex-wrap: wrap;
+      width: 100%;
+      justify-content: flex-start;
+      top: 10px;
+      left: 10px;
+      gap: 10px;
+    }
+    .icon {
+      width: 60px;
+    }
+    .icon .label {
+      font-size: 10px;
+    }
+    .window {
+      max-width: 100%;
+      margin: 10px;
+    }
+    .desktop-area {
+      align-items: flex-end;
+      padding-bottom: 20px;
+    }
+  }
+</style>
+</head>
+<body>
+
+  <!-- Desktop Area -->
+  <div class="desktop-area">
+    
+    <!-- Shortcut Icons on Desktop -->
+    <div class="desktop-icons">
+      <a href="/insane-volume-bar.html" class="icon">
+        <div class="icon-placeholder">🔊</div>
+        <div class="label">볼륨 조절기</div>
+      </a>
+      <div class="icon" onclick="alert('제작자: yummy\n버전: 1.0.0\n상식 파괴 UI 배틀 포털입니다.')">
+        <div class="icon-placeholder">ℹ️</div>
+        <div class="label">시스템 정보</div>
+      </div>
+    </div>
+
+    <!-- Main Window Container -->
+    <div class="window outset">
+      <div class="title-bar">
+        <div class="title-bar-text">
+          <span>📂 C:\BadUI_Battles</span>
+        </div>
+        <div class="title-bar-controls">
+          <button aria-label="Minimize">_</button>
+          <button aria-label="Maximize">[]</button>
+          <button aria-label="Close" onclick="alert('이 폴더는 닫을 수 없습니다.')">X</button>
+        </div>
+      </div>
+
+      <!-- Menu bar -->
+      <div class="window-menu">
+        <span>파일(F)</span>
+        <span>편집(E)</span>
+        <span>보기(V)</span>
+        <span>도움말(H)</span>
+      </div>
+
+      <!-- Content -->
+      <div class="window-body">
+        <div class="welcome-msg">
+          <strong>상식을 깨부수는 최악의 UI 배틀에 오신 것을 환영합니다!</strong><br>
+          아래의 도전을 선택해 시스템 관리자의 인내심을 증명하세요.
+        </div>
+
+        <div class="battle-list">
+          <!-- Battle Item 1 -->
+          <div class="battle-item outset">
+            <div class="battle-icon inset">🔊</div>
+            <div class="battle-info">
+              <h3 class="battle-title">점점 미쳐가는 볼륨바</h3>
+              <p class="battle-desc">
+                단순히 볼륨을 50%로 맞추기 위한 15단계의 상상초월 배틀! 미끄러지고, 도망치고, 풍선을 불며, 어두운 암흑 속의 덧셈까지 해결해야 합니다.
+              </p>
+              <a href="/insane-volume-bar.html" class="btn">도전하기 (Launch)</a>
+            </div>
+          </div>
+          
+          <!-- Future slots (disabled/coming soon for premium feel) -->
+          <div class="battle-item outset" style="opacity: 0.6;">
+            <div class="battle-icon inset">💣</div>
+            <div class="battle-info">
+              <h3 class="battle-title">최악의 회원가입 폼 (Coming Soon)</h3>
+              <p class="battle-desc">
+                마우스 움직임 하나, 키보드 입력 하나하나가 폭탄처럼 다가오는 최악의 난이도 양식 채우기 배틀.
+              </p>
+              <button class="btn" style="cursor: not-allowed;" disabled>잠김 (Locked)</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Taskbar -->
+  <div class="taskbar">
+    <button class="start-button outset" onclick="alert('메뉴 준비 중입니다!')">
+      <span>🏁</span>
+      <strong>시작 (Start)</strong>
+    </button>
+
+    <div class="taskbar-items">
+      <div class="taskbar-tab inset">
+        <span>📁 BadUI_Battles</span>
+      </div>
+    </div>
+
+    <!-- System clock & tray -->
+    <div class="system-tray inset">
+      <div class="tray-icons">🔊💬</div>
+      <div id="clock">00:00</div>
+    </div>
+  </div>
+
+  <script>
+    // System Clock Update
+    function updateClock() {
+      const now = new Date();
+      let hours = now.getHours();
+      let minutes = now.getMinutes();
+      const ampm = hours >= 12 ? 'PM' : 'AM';
+      hours = hours % 12;
+      hours = hours ? hours : 12; // 0 should be 12
+      minutes = minutes < 10 ? '0' + minutes : minutes;
+      document.getElementById('clock').textContent = `${ampm} ${hours}:${minutes}`;
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+  </script>
+</body>
+</html>

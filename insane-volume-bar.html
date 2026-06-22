@@ -223,7 +223,7 @@
     margin:6px 0 2px; letter-spacing:1px; }
   .chan-tag{ width:16px; font-weight:700; text-align:center; }
   /* LV 랜턴 (암흑 + 손전등) */
-  .lantern{ position:relative; height:230px; background:#080808; overflow:hidden;
+  .lantern{ position:relative; height:230px; background:#000; overflow:hidden;
     border:2px solid; border-color:var(--shadow) var(--hilite) var(--hilite) var(--shadow); }
   .lantern .num{ position:absolute; font-family:"Courier New",monospace; font-weight:700;
     font-size:19px; color:#bdbdbd; cursor:pointer; padding:4px 7px; user-select:none;
@@ -231,7 +231,7 @@
   .lantern .num.sel{ color:#ffd23f; text-shadow:0 0 7px #ffd23f; }
   .lantern .beam{ position:absolute; inset:0; pointer-events:none;
     background:radial-gradient(circle 64px at var(--mx,50%) var(--my,50%),
-      rgba(0,0,0,0) 0%, rgba(0,0,0,.55) 55%, rgba(0,0,0,.95) 100%); }
+      rgba(0,0,0,0) 0%, rgba(0,0,0,.6) 55%, #000 100%); }
   /* 엔딩 = 시스템 종료 화면 */
   .shutdown{ background:var(--accent); color:#fff; text-align:center; padding:24px 10px; margin:-4px; }
   .shutdown .logo{ font-size:40px; }
@@ -398,7 +398,7 @@ function confetti(){
               win() optional override, onConfirm() optional, pass(통과도발) } */
 const LEVELS = [
 /* LV.2 반전 (손잡이가 마우스 방향과 반대로 이동) */{
-  name:'LV.2 좌우반전',
+  name:'LV.1 좌우반전',
   pass:'왼쪽이 오른쪽이고 오른쪽이 왼쪽이에요. 화이팅.',
   build(){
     const sl = makeSlider({ invert:true, onChange:s=>setReadout(s.displayValue()) });
@@ -410,7 +410,7 @@ const LEVELS = [
   getDisplay(){ return state.sl.displayValue(); }
 },
 /* 2: LV.3 미끄럼 */{
-  name:'LV.3 미끄럼틀',
+  name:'LV.2 미끄럼틀',
   pass:'손 떼는 순간 다 잃는 거예요. 인생처럼.',
   build(){
     const sl = makeSlider({ onChange:s=>setReadout(s.displayValue()) });
@@ -430,7 +430,7 @@ const LEVELS = [
   getDisplay(){ return state.sl.displayValue(); }
 },
 /* 3: LV.4 새총 */{
-  name:'LV.4 새총',
+  name:'LV.3 새총',
   pass:'이걸 맞추네… 운이 좋으시네요.',
   fail:'50 근처에도 못 갔는데요?',
   build(){
@@ -449,7 +449,7 @@ const LEVELS = [
     let vel = 0, last=performance.now(), prevVal=0, prevT=last;
     sl.opts.onChange = s=>{ setReadout(s.displayValue()); drawBand();
       const now=performance.now(); const dt=(now-prevT)/1000;
-      if(dt>0 && s.dragging){ vel = (s.value-prevVal)/dt; }
+      if(dt>0 && s.dragging){ vel = (s.value-prevVal)/dt * 1.3; }  // 30% 더 민감하게
       prevVal=s.value; prevT=now;
     };
     requestAnimationFrame(drawBand);
@@ -470,7 +470,7 @@ const LEVELS = [
   win(d){ return Math.round(d)===state.target; }   // 정확히 목표값 (예민)
 },
 /* 4: LV.5 도망 */{
-  name:'LV.5 도망',
+  name:'LV.4 도망',
   pass:'버튼도 가끔은 당신을 피하고 싶어요.',
   build(){
     const sl = makeSlider({ onChange:s=>setReadout(s.displayValue()) });
@@ -493,7 +493,7 @@ const LEVELS = [
   getDisplay(){ return state.sl.displayValue(); }
 },
 /* LV.8 라디오 미로 */{
-  name:'LV.8 미로',
+  name:'LV.5 미로',
   pass:'이 안에 50이 있긴 했죠? 거 봐요.',
   build(){
     state.picked = null;
@@ -519,7 +519,7 @@ const LEVELS = [
   getDisplay(){ return state.picked==null ? -1 : state.picked; }
 },
 /* LV.15 랜턴 — 암흑 속 숫자 조합 */{
-  name:'LV.15 랜턴',
+  name:'LV.6 랜턴',
   pass:'어둠 속에서도 숫자는 거짓말 안 하죠.',
   build(){
     goalEl.textContent=`어둠 속 숫자를 마우스로 비춰 찾고, 합이 ${state.target}%가 되도록 고르세요.`;
