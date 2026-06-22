@@ -2,453 +2,640 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Bad UI Battles - Portal</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Bad UI Battles — 최악의 UI 배틀</title>
+<meta name="description" content="상식을 깨부수는 최악의 UI 배틀 모음. 윈도우 95 감성의 인터랙티브 미니게임 포털.">
 <style>
-  :root {
-    --accent: #000080;
-    --face: #c0c0c0;
-    --hilite: #ffffff;
-    --light: #dfdfdf;
-    --shadow: #808080;
-    --dark: #000000;
-    --ink: #000000;
-    --ink2: #404040;
-    --desktop: #008080; /* Classic Win95 Teal */
+  :root{
+    --accent:#000080; --accent2:#1084d0;
+    --face:#c0c0c0; --hilite:#ffffff; --light:#dfdfdf; --shadow:#808080; --dark:#000;
+    --ink:#000; --ink2:#404040; --desktop:#1a7a78;
+    --gold:#ffe14d;
   }
-
-  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-  html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; }
-
-  body {
-    background: var(--desktop);
-    color: var(--ink);
-    font-family: "MS Sans Serif", "Tahoma", "Apple SD Gothic Neo", "Malgun Gothic", -apple-system, sans-serif;
-    font-size: 13px;
-    display: flex;
-    flex-direction: column;
-    height: 100vh;
-    position: relative;
-    user-select: none;
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body{ margin:0; padding:0; height:100%; overflow:hidden; }
+  body{
+    background:var(--desktop);
+    background-image:
+      radial-gradient(circle at 50% 40%, #2a9c99 0%, #137370 70%, #0d5b58 100%);
+    color:var(--ink);
+    font-family:"MS Sans Serif","Tahoma","Apple SD Gothic Neo","Malgun Gothic",-apple-system,sans-serif;
+    font-size:13px;
+    display:flex; flex-direction:column; height:100vh; height:100dvh;
+    position:relative; user-select:none;
   }
+  .outset{ border:2px solid; border-color:var(--hilite) var(--dark) var(--dark) var(--hilite);
+    box-shadow:inset 1px 1px 0 var(--face), inset -1px -1px 0 var(--shadow); }
+  .inset{ border:2px solid; border-color:var(--shadow) var(--hilite) var(--hilite) var(--shadow);
+    box-shadow:inset 1px 1px 0 var(--dark), inset -1px -1px 0 var(--light); }
 
-  /* 3D Bevel borders */
-  .outset {
-    border: 2px solid;
-    border-color: var(--hilite) var(--dark) var(--dark) var(--hilite);
-    box-shadow: inset 1px 1px 0 var(--face), inset -1px -1px 0 var(--shadow);
+  /* ===== Boot splash ===== */
+  #boot{ position:fixed; inset:0; z-index:1000; background:#000; color:#c8c8c8;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:18px;
+    font-family:"Courier New",monospace; cursor:pointer; }
+  #boot .logo{ font-size:54px; }
+  #boot .brand{ font-size:26px; font-weight:700; letter-spacing:1px; color:#fff;
+    font-family:"MS Sans Serif",sans-serif; }
+  #boot .sub{ font-size:13px; color:#8fcaca; }
+  #boot .barwrap{ width:240px; height:18px; background:#111; border:1px solid #444; padding:2px; }
+  #boot .bar{ height:100%; width:0; background:linear-gradient(90deg,#0f0,#7cff7c); transition:width .1s linear; }
+  #boot .tip{ position:absolute; bottom:24px; font-size:11px; color:#5a8a8a; }
+  #boot.hide{ animation:fade .4s ease forwards; }
+  @keyframes fade{ to{ opacity:0; visibility:hidden; } }
+
+  /* ===== Desktop ===== */
+  .desktop-area{ flex:1; position:relative; overflow:hidden; }
+  .desktop-icons{ position:absolute; top:14px; left:14px; display:flex; flex-direction:column;
+    gap:6px; z-index:5; }
+  .icon{ display:flex; flex-direction:column; align-items:center; width:84px; padding:6px 4px;
+    text-align:center; color:#fff; text-shadow:1px 1px 1px #000; cursor:pointer;
+    text-decoration:none; border:1px dotted transparent; }
+  .icon .glyph{ font-size:32px; line-height:1; margin-bottom:5px; filter:drop-shadow(1px 1px 1px rgba(0,0,0,.5)); }
+  .icon .label{ font-size:11px; word-break:keep-all; padding:1px 3px; }
+  .icon:focus{ outline:none; }
+  .icon.sel{ border:1px dotted #fff; }
+  .icon.sel .label{ background:var(--accent); }
+  .icon:hover .label{ text-decoration:underline; }
+
+  /* ===== Window ===== */
+  .window{ position:absolute; width:min(92vw,480px); background:var(--face); padding:3px;
+    display:flex; flex-direction:column; z-index:20; }
+  .window.maxi{ left:0 !important; top:0 !important; width:100% !important; height:100%; }
+  .window.anim{ animation:zoom .14s ease-out; }
+  @keyframes zoom{ from{ transform:scale(.96); opacity:0 } to{ transform:scale(1); opacity:1 } }
+  .title-bar{ display:flex; justify-content:space-between; align-items:center;
+    background:linear-gradient(90deg,var(--accent),var(--accent2)); color:#fff;
+    padding:3px 4px 3px 6px; cursor:grab; }
+  .title-bar.inactive{ background:linear-gradient(90deg,#7b7b7b,#9e9e9e); }
+  .title-bar:active{ cursor:grabbing; }
+  .title-bar-text{ font-weight:bold; font-size:13px; display:flex; align-items:center; gap:6px;
+    pointer-events:none; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .title-bar-controls{ display:flex; gap:2px; flex-shrink:0; }
+  .title-bar-controls button{ width:18px; height:16px; font-size:9px; font-weight:bold; color:var(--ink);
+    background:var(--face); border:1px solid; border-color:var(--hilite) var(--dark) var(--dark) var(--hilite);
+    display:flex; align-items:center; justify-content:center; cursor:pointer; padding:0; line-height:1; }
+  .title-bar-controls button:active{ border-color:var(--dark) var(--hilite) var(--hilite) var(--dark); }
+  .window-menu{ display:flex; padding:4px 6px; gap:14px; border-bottom:1px solid var(--shadow); font-size:12px; }
+  .window-menu span{ cursor:pointer; padding:1px 4px; }
+  .window-menu span:hover{ background:var(--accent); color:#fff; }
+  .window-body{ padding:14px; overflow-y:auto; max-height:min(62vh,440px); background:var(--face); }
+
+  .welcome{ display:flex; gap:12px; align-items:flex-start; margin-bottom:14px; padding:10px;
+    background:var(--light); }
+  .welcome .big{ font-size:30px; line-height:1; }
+  .welcome h2{ margin:0 0 4px; font-size:14px; }
+  .welcome p{ margin:0; font-size:12px; line-height:1.45; color:var(--ink2); }
+
+  .toolbar{ display:flex; gap:8px; align-items:center; margin-bottom:12px; font-size:11px; color:var(--ink2); }
+  .toolbar .count{ margin-left:auto; }
+
+  .battle-list{ display:flex; flex-direction:column; gap:12px; }
+  .battle-item{ background:var(--light); padding:12px; display:flex; gap:12px; align-items:flex-start;
+    position:relative; transition:transform .08s, box-shadow .08s; }
+  .battle-item.live{ cursor:pointer; }
+  .battle-item.live:hover{ transform:translateY(-2px); box-shadow:3px 4px 0 rgba(0,0,0,.25); }
+  .battle-item.locked{ opacity:.72; }
+  .battle-icon{ font-size:30px; padding:8px; background:var(--face); flex-shrink:0; line-height:1; }
+  .battle-info{ flex:1; min-width:0; }
+  .battle-title{ font-weight:bold; font-size:14px; margin:0 0 3px; color:var(--accent); }
+  .battle-desc{ font-size:12px; line-height:1.45; color:var(--ink2); margin:0 0 8px; }
+  .meta{ display:flex; flex-wrap:wrap; gap:6px 12px; font-size:11px; color:var(--ink2); margin-bottom:10px; }
+  .meta b{ color:var(--ink); }
+  .stars{ color:#c98a00; letter-spacing:1px; }
+  .badge{ position:absolute; top:-8px; right:8px; background:var(--gold); color:#000;
+    border:1px solid #b89a00; font-size:10px; font-weight:700; padding:1px 7px; border-radius:2px;
+    box-shadow:1px 1px 0 rgba(0,0,0,.3); }
+  .badge.soon{ background:#cfcfcf; color:#444; border-color:#888; }
+
+  .btn{ display:inline-flex; align-items:center; gap:6px; padding:7px 14px; font-family:inherit;
+    font-size:12px; font-weight:bold; color:var(--ink); background:var(--face);
+    border:2px solid; border-color:var(--hilite) var(--dark) var(--dark) var(--hilite);
+    box-shadow:inset 1px 1px 0 var(--face), inset -1px -1px 0 var(--shadow);
+    cursor:pointer; text-decoration:none; text-align:center; }
+  .btn:active{ border-color:var(--dark) var(--hilite) var(--hilite) var(--dark);
+    box-shadow:inset 1px 1px 0 var(--dark), inset -1px -1px 0 var(--light); }
+  .btn:focus-visible{ outline:1px dotted #000; outline-offset:-5px; }
+  .btn[disabled]{ color:#808080; text-shadow:1px 1px 0 #fff; cursor:not-allowed; }
+  .btn.primary{ font-size:13px; padding:8px 18px; }
+
+  /* ===== Start menu ===== */
+  #startMenu{ position:absolute; bottom:42px; left:2px; width:230px; background:var(--face);
+    z-index:60; display:none; }
+  #startMenu.open{ display:flex; }
+  #startMenu .rail{ width:30px; background:linear-gradient(180deg,var(--accent),#3a3a8a);
+    writing-mode:vertical-rl; transform:rotate(180deg); color:#fff; font-weight:700; font-size:15px;
+    text-align:center; padding:10px 0; letter-spacing:1px; }
+  #startMenu .items{ flex:1; padding:3px; }
+  .smi{ display:flex; align-items:center; gap:10px; padding:7px 10px; cursor:pointer; font-size:13px; }
+  .smi:hover{ background:var(--accent); color:#fff; }
+  .smi .g{ font-size:18px; width:20px; text-align:center; }
+  .smi.sep{ border-top:1px solid var(--shadow); margin:3px 0; padding:0; pointer-events:none; height:0; }
+
+  /* ===== Context menu ===== */
+  #ctx{ position:absolute; z-index:70; background:var(--face); width:170px; display:none; padding:2px; }
+  #ctx.open{ display:block; }
+  .ci{ padding:5px 14px; font-size:12px; cursor:pointer; }
+  .ci:hover{ background:var(--accent); color:#fff; }
+  .ci.disabled{ color:#808080; text-shadow:1px 1px 0 #fff; pointer-events:none; }
+  .ci.sep{ border-top:1px solid var(--shadow); margin:3px 0; padding:0; height:0; }
+
+  /* ===== Modal dialog ===== */
+  #modalOverlay{ position:fixed; inset:0; background:rgba(0,0,0,.35); z-index:200;
+    display:none; align-items:center; justify-content:center; padding:16px; }
+  #modalOverlay.open{ display:flex; }
+  .dialog{ width:min(94vw,360px); background:var(--face); padding:3px; animation:zoom .14s ease-out; }
+  .dialog .title-bar{ cursor:default; }
+  .dialog-body{ padding:18px 16px; display:flex; gap:14px; align-items:flex-start; }
+  .dialog-body .dg{ font-size:30px; line-height:1; }
+  .dialog-body .msg{ font-size:13px; line-height:1.5; flex:1; }
+  .dialog-body .msg input{ width:100%; margin-top:8px; font-family:inherit; font-size:13px; padding:5px; }
+  .dialog-buttons{ display:flex; justify-content:center; gap:10px; padding:0 16px 16px; }
+  .dialog-buttons .btn{ min-width:84px; justify-content:center; }
+
+  /* ===== Onboarding helper ===== */
+  #helper{ position:absolute; right:14px; bottom:54px; width:230px; background:#ffffe1;
+    border:1px solid #000; padding:10px 12px; z-index:55; font-size:12px; line-height:1.45;
+    box-shadow:3px 3px 0 rgba(0,0,0,.3); display:none; }
+  #helper.show{ display:block; animation:zoom .2s ease-out; }
+  #helper .h{ display:flex; gap:8px; align-items:center; font-weight:700; margin-bottom:6px; }
+  #helper .h .x{ margin-left:auto; cursor:pointer; border:1px solid #999; background:var(--face);
+    width:16px; height:14px; font-size:9px; display:flex; align-items:center; justify-content:center; }
+  #helper .tipbody{ color:#333; }
+  #helper .dot{ display:inline-block; }
+
+  /* ===== Taskbar ===== */
+  .taskbar{ height:38px; background:var(--face); border-top:2px solid var(--hilite);
+    display:flex; align-items:center; padding:2px 3px; gap:4px; z-index:80; }
+  .start-button{ font-weight:bold; font-size:13px; padding:3px 10px; display:flex; align-items:center;
+    gap:6px; height:30px; }
+  .start-button.active{ border-color:var(--dark) var(--hilite) var(--hilite) var(--dark);
+    box-shadow:inset 1px 1px 0 var(--dark), inset -1px -1px 0 var(--light); }
+  .taskbar-items{ flex:1; display:flex; gap:4px; height:30px; overflow:hidden; }
+  .taskbar-tab{ width:170px; max-width:46vw; height:100%; font-weight:bold; display:flex;
+    align-items:center; padding:0 8px; font-size:11px; gap:6px; cursor:pointer; background:var(--face);
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .taskbar-tab.active{ border-color:var(--shadow) var(--hilite) var(--hilite) var(--shadow);
+    box-shadow:inset 1px 1px 0 var(--dark), inset -1px -1px 0 var(--light);
+    background:repeating-linear-gradient(45deg,#c0c0c0,#c0c0c0 2px,#b4b4b4 2px,#b4b4b4 4px); }
+  .system-tray{ padding:3px 8px; height:30px; display:flex; align-items:center; gap:10px;
+    font-variant-numeric:tabular-nums; }
+  .tray-btn{ cursor:pointer; font-size:14px; line-height:1; }
+  #clock{ font-size:12px; }
+
+  /* CRT scanline overlay (toggle) */
+  #crt{ position:fixed; inset:0; pointer-events:none; z-index:300; display:none;
+    background:repeating-linear-gradient(0deg, rgba(0,0,0,.10) 0 1px, transparent 1px 3px); }
+  #crt.on{ display:block; }
+
+  @media (max-width:480px){
+    .desktop-icons{ flex-direction:row; flex-wrap:wrap; gap:8px; }
+    .icon{ width:72px; }
+    .window{ width:94vw; }
+    .welcome .big{ font-size:24px; }
+    #helper{ width:200px; }
+    .taskbar-tab{ width:120px; }
   }
-
-  .inset {
-    border: 2px solid;
-    border-color: var(--shadow) var(--hilite) var(--hilite) var(--shadow);
-    box-shadow: inset 1px 1px 0 var(--dark), inset -1px -1px 0 var(--light);
-  }
-
-  /* Desktop Area */
-  .desktop-area {
-    flex: 1;
-    position: relative;
-    padding: 20px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    overflow: auto;
-  }
-
-  /* Desktop Icons */
-  .desktop-icons {
-    position: absolute;
-    top: 20px;
-    left: 20px;
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-    z-index: 5;
-  }
-
-  .icon {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    width: 80px;
-    text-align: center;
-    color: white;
-    text-shadow: 1px 1px 1px #000;
-    cursor: pointer;
-    text-decoration: none;
-  }
-
-  .icon img, .icon .icon-placeholder {
-    width: 32px;
-    height: 32px;
-    margin-bottom: 6px;
-  }
-
-  .icon .icon-placeholder {
-    font-size: 32px;
-    line-height: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .icon .label {
-    font-size: 11px;
-    word-break: keep-all;
-  }
-
-  .icon:hover .label {
-    background-color: var(--accent);
-    outline: 1px dotted #fff;
-  }
-
-  /* Classic Window */
-  .window {
-    width: 100%;
-    max-width: 460px;
-    background: var(--face);
-    padding: 3px;
-    display: flex;
-    flex-direction: column;
-    animation: zoom 0.15s ease-out;
-  }
-
-  @keyframes zoom {
-    from { transform: scale(0.95); opacity: 0; }
-    to { transform: scale(1); opacity: 1; }
-  }
-
-  .title-bar {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background: linear-gradient(90deg, var(--accent), #1084d0);
-    color: #fff;
-    padding: 3px 4px 3px 6px;
-  }
-
-  .title-bar-text {
-    font-weight: bold;
-    font-size: 13px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-
-  .title-bar-controls {
-    display: flex;
-    gap: 2px;
-  }
-
-  .title-bar-controls button {
-    width: 16px;
-    height: 14px;
-    font-size: 9px;
-    font-weight: bold;
-    color: var(--ink);
-    background: var(--face);
-    border: 1px solid;
-    border-color: var(--hilite) var(--dark) var(--dark) var(--hilite);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    padding: 0;
-  }
-
-  .title-bar-controls button:active {
-    border-color: var(--dark) var(--hilite) var(--hilite) var(--dark);
-  }
-
-  /* Window Menu */
-  .window-menu {
-    display: flex;
-    padding: 4px 6px;
-    gap: 12px;
-    border-bottom: 1px solid var(--shadow);
-  }
-
-  .window-menu span {
-    cursor: pointer;
-  }
-
-  .window-menu span:first-letter {
-    text-decoration: underline;
-  }
-
-  /* Window Content */
-  .window-body {
-    padding: 15px;
-    overflow-y: auto;
-    max-height: 400px;
-  }
-
-  .welcome-msg {
-    margin-bottom: 15px;
-    font-size: 13px;
-    line-height: 1.4;
-  }
-
-  /* Battle Card Item */
-  .battle-list {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-  }
-
-  .battle-item {
-    background: var(--light);
-    padding: 12px;
-    display: flex;
-    gap: 12px;
-    align-items: flex-start;
-  }
-
-  .battle-icon {
-    font-size: 32px;
-    padding: 6px;
-    background: var(--face);
-    flex-shrink: 0;
-  }
-
-  .battle-info {
-    flex: 1;
-  }
-
-  .battle-title {
-    font-weight: bold;
-    font-size: 14px;
-    margin: 0 0 4px 0;
-    color: var(--accent);
-  }
-
-  .battle-desc {
-    font-size: 12px;
-    line-height: 1.4;
-    color: var(--ink2);
-    margin: 0 0 10px 0;
-  }
-
-  .btn {
-    display: inline-block;
-    padding: 6px 14px;
-    font-family: inherit;
-    font-size: 12px;
-    font-weight: bold;
-    color: var(--ink);
-    background: var(--face);
-    border: 2px solid;
-    border-color: var(--hilite) var(--dark) var(--dark) var(--hilite);
-    box-shadow: inset 1px 1px 0 var(--face), inset -1px -1px 0 var(--shadow);
-    cursor: pointer;
-    text-decoration: none;
-    text-align: center;
-  }
-
-  .btn:active {
-    border-color: var(--dark) var(--hilite) var(--hilite) var(--dark);
-    box-shadow: inset 1px 1px 0 var(--dark), inset -1px -1px 0 var(--light);
-  }
-
-  /* Taskbar */
-  .taskbar {
-    height: 40px;
-    background: var(--face);
-    border-top: 2px solid var(--hilite);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 2px;
-    z-index: 10;
-  }
-
-  .start-button {
-    font-weight: bold;
-    font-size: 14px;
-    padding: 4px 10px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    height: 100%;
-  }
-
-  .start-button img {
-    width: 16px;
-    height: 16px;
-  }
-
-  .taskbar-items {
-    flex: 1;
-    display: flex;
-    gap: 4px;
-    margin-left: 10px;
-    height: 100%;
-  }
-
-  .taskbar-tab {
-    width: 150px;
-    height: 100%;
-    font-weight: bold;
-    display: flex;
-    align-items: center;
-    padding: 0 8px;
-    font-size: 11px;
-    gap: 6px;
-  }
-
-  .system-tray {
-    padding: 4px 8px;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-variant-numeric: tabular-nums;
-  }
-
-  .tray-icons {
-    display: flex;
-    gap: 4px;
-    font-size: 14px;
-  }
-
-  /* Responsive Design */
-  @media (max-width: 480px) {
-    .desktop-icons {
-      flex-direction: row;
-      flex-wrap: wrap;
-      width: 100%;
-      justify-content: flex-start;
-      top: 10px;
-      left: 10px;
-      gap: 10px;
-    }
-    .icon {
-      width: 60px;
-    }
-    .icon .label {
-      font-size: 10px;
-    }
-    .window {
-      max-width: 100%;
-      margin: 10px;
-    }
-    .desktop-area {
-      align-items: flex-end;
-      padding-bottom: 20px;
-    }
+  @media (prefers-reduced-motion: reduce){
+    .window.anim, .dialog, #helper.show{ animation:none; }
+    #boot.hide{ animation:none; opacity:0; visibility:hidden; }
+    .battle-item.live:hover{ transform:none; }
   }
 </style>
 </head>
 <body>
 
-  <!-- Desktop Area -->
-  <div class="desktop-area">
-    
-    <!-- Shortcut Icons on Desktop -->
+  <!-- Boot splash -->
+  <div id="boot" role="dialog" aria-label="부팅 화면">
+    <div class="logo">🖥️</div>
+    <div class="brand">Bad&nbsp;UI&nbsp;Battles</div>
+    <div class="sub">최악의 인터페이스 컬렉션 · v2.0</div>
+    <div class="barwrap"><div class="bar" id="bootBar"></div></div>
+    <div class="tip">클릭하면 건너뜁니다…</div>
+  </div>
+
+  <!-- Desktop -->
+  <div class="desktop-area" id="desktop">
     <div class="desktop-icons">
-      <a href="/insane-volume-bar.html" class="icon">
-        <div class="icon-placeholder">🔊</div>
-        <div class="label">볼륨 조절기</div>
+      <div class="icon" tabindex="0" data-open="portal">
+        <div class="glyph">📂</div><div class="label">배틀 폴더</div>
+      </div>
+      <a class="icon" tabindex="0" href="insane-volume-bar.html">
+        <div class="glyph">🔊</div><div class="label">볼륨 조절기</div>
       </a>
-      <div class="icon" onclick="alert('제작자: yummy\n버전: 1.0.0\n상식 파괴 UI 배틀 포털입니다.')">
-        <div class="icon-placeholder">ℹ️</div>
-        <div class="label">시스템 정보</div>
+      <div class="icon" tabindex="0" data-open="about">
+        <div class="glyph">ℹ️</div><div class="label">시스템 정보</div>
+      </div>
+      <div class="icon" tabindex="0" data-open="recycle">
+        <div class="glyph">🗑️</div><div class="label">휴지통</div>
       </div>
     </div>
 
-    <!-- Main Window Container -->
-    <div class="window outset">
-      <div class="title-bar">
-        <div class="title-bar-text">
-          <span>📂 C:\BadUI_Battles</span>
-        </div>
+    <!-- Portal window -->
+    <div class="window outset anim" id="win" role="dialog" aria-label="배틀 포털">
+      <div class="title-bar" id="titlebar">
+        <div class="title-bar-text">📂 C:\BadUI_Battles</div>
         <div class="title-bar-controls">
-          <button aria-label="Minimize">_</button>
-          <button aria-label="Maximize">[]</button>
-          <button aria-label="Close" onclick="alert('이 폴더는 닫을 수 없습니다.')">X</button>
+          <button id="btnMin" aria-label="최소화">_</button>
+          <button id="btnMax" aria-label="최대화">▢</button>
+          <button id="btnClose" aria-label="닫기">✕</button>
         </div>
       </div>
-
-      <!-- Menu bar -->
       <div class="window-menu">
-        <span>파일(F)</span>
-        <span>편집(E)</span>
-        <span>보기(V)</span>
-        <span>도움말(H)</span>
+        <span data-open="about">파일(F)</span>
+        <span data-open="help">편집(E)</span>
+        <span data-open="crt">보기(V)</span>
+        <span data-open="help">도움말(H)</span>
       </div>
-
-      <!-- Content -->
       <div class="window-body">
-        <div class="welcome-msg">
-          <strong>상식을 깨부수는 최악의 UI 배틀에 오신 것을 환영합니다!</strong><br>
-          아래의 도전을 선택해 시스템 관리자의 인내심을 증명하세요.
+        <div class="welcome">
+          <div class="big">🏆</div>
+          <div>
+            <h2>최악의 UI 배틀에 오신 것을 환영합니다</h2>
+            <p>상식을 비트는 인터페이스로 당신의 인내심을 시험하세요. 아래 도전을 골라 시작합니다.</p>
+          </div>
         </div>
 
-        <div class="battle-list">
-          <!-- Battle Item 1 -->
-          <div class="battle-item outset">
+        <div class="toolbar">
+          <span>📁 정렬: <b>추천순</b></span>
+          <span class="count" id="count"></span>
+        </div>
+
+        <div class="battle-list" id="list">
+          <!-- Live -->
+          <div class="battle-item live outset" data-launch="insane-volume-bar.html" tabindex="0" role="button" aria-label="점점 미쳐가는 볼륨바 실행">
+            <span class="badge">NEW</span>
             <div class="battle-icon inset">🔊</div>
             <div class="battle-info">
               <h3 class="battle-title">점점 미쳐가는 볼륨바</h3>
-              <p class="battle-desc">
-                단순히 볼륨을 50%로 맞추기 위한 15단계의 상상초월 배틀! 미끄러지고, 도망치고, 풍선을 불며, 어두운 암흑 속의 덧셈까지 해결해야 합니다.
-              </p>
-              <a href="/insane-volume-bar.html" class="btn">도전하기 (Launch)</a>
+              <p class="battle-desc">볼륨을 목표값에 맞추는 단순한 일… 인데 슬라이더가 미끄러지고, 도망치고, 어둠 속 숫자까지 더해야 합니다.</p>
+              <div class="meta">
+                <span class="stars" title="난이도">★★★★☆</span>
+                <span>⏱ 약 <b>5분</b></span>
+                <span>🎯 <b>6</b>단계</span>
+                <span>👍 <b>98%</b></span>
+              </div>
+              <a href="insane-volume-bar.html" class="btn primary">▶ 도전하기</a>
             </div>
           </div>
-          
-          <!-- Future slots (disabled/coming soon for premium feel) -->
-          <div class="battle-item outset" style="opacity: 0.6;">
+
+          <!-- Locked -->
+          <div class="battle-item locked outset">
+            <span class="badge soon">COMING SOON</span>
             <div class="battle-icon inset">💣</div>
             <div class="battle-info">
-              <h3 class="battle-title">최악의 회원가입 폼 (Coming Soon)</h3>
-              <p class="battle-desc">
-                마우스 움직임 하나, 키보드 입력 하나하나가 폭탄처럼 다가오는 최악의 난이도 양식 채우기 배틀.
-              </p>
-              <button class="btn" style="cursor: not-allowed;" disabled>잠김 (Locked)</button>
+              <h3 class="battle-title">최악의 회원가입 폼</h3>
+              <p class="battle-desc">마우스 한 번, 키 입력 하나가 지뢰처럼 터지는 양식 채우기. 비밀번호 규칙이 당신을 미치게 합니다.</p>
+              <div class="meta">
+                <span class="stars">★★★★★</span>
+                <span>⏱ 약 <b>8분</b></span>
+                <span>🎯 <b>10</b>단계</span>
+              </div>
+              <button class="btn" data-notify="최악의 회원가입 폼">🔔 출시 알림 받기</button>
+            </div>
+          </div>
+
+          <div class="battle-item locked outset">
+            <span class="badge soon">COMING SOON</span>
+            <div class="battle-icon inset">📅</div>
+            <div class="battle-info">
+              <h3 class="battle-title">지옥의 날짜 선택기</h3>
+              <p class="battle-desc">오늘 날짜를 고르는 데 1분도 안 걸린다고요? 이 달력은 생각이 다릅니다.</p>
+              <div class="meta">
+                <span class="stars">★★★★☆</span>
+                <span>⏱ 약 <b>4분</b></span>
+                <span>🎯 <b>7</b>단계</span>
+              </div>
+              <button class="btn" data-notify="지옥의 날짜 선택기">🔔 출시 알림 받기</button>
             </div>
           </div>
         </div>
+      </div>
+    </div>
+
+    <!-- Onboarding helper -->
+    <div id="helper" role="status">
+      <div class="h"><span>💡</span><span>도우미</span><span class="x" id="helperClose" title="닫기">✕</span></div>
+      <div class="tipbody" id="helperTip"></div>
+    </div>
+
+    <!-- Context menu -->
+    <div id="ctx" class="outset">
+      <div class="ci" data-ctx="refresh">새로 고침(R)</div>
+      <div class="ci" data-ctx="arrange">아이콘 정렬(A)</div>
+      <div class="ci sep"></div>
+      <div class="ci" data-ctx="crt">CRT 효과 켜기/끄기</div>
+      <div class="ci sep"></div>
+      <div class="ci" data-ctx="about">등록 정보(P)</div>
+    </div>
+
+    <!-- Start menu -->
+    <div id="startMenu" class="outset">
+      <div class="rail">Bad UI 95</div>
+      <div class="items">
+        <div class="smi" data-launch="insane-volume-bar.html"><span class="g">🔊</span> 볼륨 조절기 실행</div>
+        <div class="smi" data-open="portal"><span class="g">📂</span> 배틀 폴더 열기</div>
+        <div class="smi" data-open="help"><span class="g">❓</span> 도움말</div>
+        <div class="smi" data-open="about"><span class="g">ℹ️</span> 시스템 정보</div>
+        <div class="smi sep"></div>
+        <div class="smi" data-open="shutdown"><span class="g">⏻</span> 시스템 종료</div>
       </div>
     </div>
   </div>
 
   <!-- Taskbar -->
   <div class="taskbar">
-    <button class="start-button outset" onclick="alert('메뉴 준비 중입니다!')">
-      <span>🏁</span>
-      <strong>시작 (Start)</strong>
-    </button>
-
-    <div class="taskbar-items">
-      <div class="taskbar-tab inset">
-        <span>📁 BadUI_Battles</span>
-      </div>
-    </div>
-
-    <!-- System clock & tray -->
+    <button class="start-button outset" id="startBtn"><span>🪟</span><strong>시작</strong></button>
+    <div class="taskbar-items" id="tabs"></div>
     <div class="system-tray inset">
-      <div class="tray-icons">🔊💬</div>
-      <div id="clock">00:00</div>
+      <span class="tray-btn" id="soundBtn" title="소리 켜기/끄기">🔊</span>
+      <span class="tray-btn" id="crtBtn" title="CRT 효과">📺</span>
+      <span id="clock" title="">00:00</span>
     </div>
   </div>
 
-  <script>
-    // System Clock Update
-    function updateClock() {
-      const now = new Date();
-      let hours = now.getHours();
-      let minutes = now.getMinutes();
-      const ampm = hours >= 12 ? 'PM' : 'AM';
-      hours = hours % 12;
-      hours = hours ? hours : 12; // 0 should be 12
-      minutes = minutes < 10 ? '0' + minutes : minutes;
-      document.getElementById('clock').textContent = `${ampm} ${hours}:${minutes}`;
-    }
-    setInterval(updateClock, 1000);
-    updateClock();
-  </script>
+  <!-- Modal -->
+  <div id="modalOverlay">
+    <div class="dialog" id="dialog" role="dialog" aria-modal="true">
+      <div class="title-bar"><div class="title-bar-text" id="dlgTitle">알림</div>
+        <div class="title-bar-controls"><button id="dlgX" aria-label="닫기">✕</button></div></div>
+      <div class="dialog-body"><div class="dg" id="dlgIcon">ℹ️</div><div class="msg" id="dlgMsg"></div></div>
+      <div class="dialog-buttons" id="dlgButtons"></div>
+    </div>
+  </div>
+
+  <div id="crt"></div>
+
+<script>
+"use strict";
+const $ = s => document.querySelector(s);
+const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ============ Sound (synthesized, no assets) ============ */
+let audioCtx=null, soundOn=true;
+function beep(freq=440, dur=0.045, type='square', vol=0.04){
+  if(!soundOn) return;
+  try{
+    audioCtx = audioCtx || new (window.AudioContext||window.webkitAudioContext)();
+    const o=audioCtx.createOscillator(), g=audioCtx.createGain();
+    o.type=type; o.frequency.value=freq; g.gain.value=vol;
+    o.connect(g); g.connect(audioCtx.destination);
+    o.start(); o.stop(audioCtx.currentTime+dur);
+  }catch(e){}
+}
+const sClick = ()=>beep(660,0.04,'square',0.035);
+const sOpen  = ()=>{ beep(520,0.05); setTimeout(()=>beep(780,0.06),55); };
+const sError = ()=>{ beep(200,0.12,'sawtooth',0.05); };
+function startupChime(){ if(!soundOn) return; [523,659,784,1047].forEach((f,i)=>setTimeout(()=>beep(f,0.14,'triangle',0.04),i*110)); }
+
+/* ============ Modal dialog (replaces alert) ============ */
+function dialog({title='알림', icon='ℹ️', html='', buttons=[{label:'확인',primary:true}]}={}){
+  $('#dlgTitle').textContent=title;
+  $('#dlgIcon').textContent=icon;
+  $('#dlgMsg').innerHTML=html;
+  const bc=$('#dlgButtons'); bc.innerHTML='';
+  buttons.forEach(b=>{
+    const el=document.createElement('button'); el.className='btn'+(b.primary?' primary':'');
+    el.textContent=b.label;
+    el.onclick=()=>{ sClick(); closeModal(); b.onClick&&b.onClick(); };
+    bc.appendChild(el);
+  });
+  $('#modalOverlay').classList.add('open');
+  sOpen();
+  const first=bc.querySelector('.btn'); first&&first.focus();
+}
+function closeModal(){ $('#modalOverlay').classList.remove('open'); }
+$('#dlgX').onclick=()=>{ sClick(); closeModal(); };
+$('#modalOverlay').addEventListener('mousedown', e=>{ if(e.target===$('#modalOverlay')) closeModal(); });
+
+/* ============ Boot splash ============ */
+(function boot(){
+  const bar=$('#bootBar'); let p=0;
+  const total = reduceMotion ? 200 : 1800;
+  const t0=performance.now();
+  function done(){ const b=$('#boot'); if(!b||b.classList.contains('hide'))return;
+    b.classList.add('hide'); startupChime(); setTimeout(()=>b.remove(),450);
+    setTimeout(showHelper, 700); }
+  function step(now){ const e=now-t0; p=Math.min(100,(e/total)*100);
+    bar.style.width=p+'%';
+    if(p<100) requestAnimationFrame(step); else done(); }
+  requestAnimationFrame(step);
+  $('#boot').addEventListener('click', done);
+  addEventListener('keydown', e=>{ if(e.key==='Enter'||e.key===' ') done(); }, {once:false});
+})();
+
+/* ============ Window management ============ */
+const win=$('#win'), titlebar=$('#titlebar');
+const tabs=$('#tabs');
+let winState={ open:true, max:false, prev:null };
+
+function centerWindow(){
+  const d=$('#desktop').getBoundingClientRect();
+  const w=win.offsetWidth, h=win.offsetHeight;
+  win.style.left=Math.max(8,(d.width-w)/2)+'px';
+  win.style.top=Math.max(8,(d.height-h)/2 - 10)+'px';
+}
+function clampWindow(){
+  const d=$('#desktop').getBoundingClientRect();
+  let l=parseFloat(win.style.left)||0, t=parseFloat(win.style.top)||0;
+  const w=win.offsetWidth, h=win.offsetHeight;
+  l = w<=d.width ? Math.min(Math.max(l,0), d.width-w)       // 화면에 들어오면 완전히 보이게
+                 : Math.min(Math.max(l,-w+60), d.width-60); // 더 크면 최소 60px만 보장
+  t = h<=d.height ? Math.min(Math.max(t,0), d.height-h)
+                  : Math.min(Math.max(t,0), d.height-30);
+  win.style.left=l+'px'; win.style.top=t+'px';
+}
+
+function renderTab(){
+  tabs.innerHTML='';
+  if(winState.open){
+    const tab=document.createElement('div');
+    tab.className='taskbar-tab outset'+(!win.classList.contains('hidden')?' active':'');
+    tab.innerHTML='📂 BadUI_Battles';
+    tab.onclick=()=>{ sClick(); toggleMinimize(); };
+    tabs.appendChild(tab);
+  }
+}
+function showWindow(){
+  winState.open=true; win.style.display='flex';
+  win.classList.remove('hidden'); win.classList.add('anim');
+  setTimeout(()=>win.classList.remove('anim'),200);
+  if(!win.style.left) centerWindow();
+  renderTab(); sOpen();
+}
+function closeWindow(){ winState.open=false; win.style.display='none'; renderTab(); }
+function toggleMinimize(){
+  if(win.classList.contains('hidden')){ win.classList.remove('hidden'); win.style.display='flex'; }
+  else { win.classList.add('hidden'); win.style.display='none'; }
+  renderTab();
+}
+function toggleMax(){
+  winState.max=!winState.max;
+  if(winState.max){ winState.prev={left:win.style.left,top:win.style.top}; win.classList.add('maxi'); }
+  else { win.classList.remove('maxi'); if(winState.prev){ win.style.left=winState.prev.left; win.style.top=winState.prev.top; } }
+}
+$('#btnMin').onclick=()=>{ sClick(); toggleMinimize(); };
+$('#btnMax').onclick=()=>{ sClick(); toggleMax(); };
+$('#btnClose').onclick=()=>{ sClick(); closeWindow();
+  dialog({title:'폴더 닫힘', icon:'📂', html:'배틀 폴더를 닫았습니다.<br>다시 열려면 바탕화면의 <b>배틀 폴더</b> 아이콘이나 <b>시작</b> 메뉴를 사용하세요.'}); };
+
+/* Drag window */
+(function drag(){
+  let sx,sy,sl,st,dragging=false;
+  titlebar.addEventListener('pointerdown', e=>{
+    if(winState.max) return;
+    dragging=true; titlebar.setPointerCapture(e.pointerId);
+    sx=e.clientX; sy=e.clientY; sl=parseFloat(win.style.left)||0; st=parseFloat(win.style.top)||0;
+  });
+  titlebar.addEventListener('pointermove', e=>{
+    if(!dragging) return;
+    win.style.left=(sl+e.clientX-sx)+'px'; win.style.top=(st+e.clientY-sy)+'px';
+  });
+  function end(){ if(dragging){ dragging=false; clampWindow(); } }
+  titlebar.addEventListener('pointerup', end);
+  titlebar.addEventListener('pointercancel', end);
+})();
+addEventListener('resize', ()=>{ if(!winState.max && winState.open) centerWindow(); });
+
+/* ============ Start menu ============ */
+const startMenu=$('#startMenu'), startBtn=$('#startBtn');
+function toggleStart(force){
+  const open = force!=null?force : !startMenu.classList.contains('open');
+  startMenu.classList.toggle('open', open);
+  startBtn.classList.toggle('active', open);
+  if(open) sOpen();
+}
+startBtn.onclick=e=>{ e.stopPropagation(); sClick(); toggleStart(); };
+document.addEventListener('click', ()=>{ toggleStart(false); hideCtx(); });
+
+/* ============ Context menu ============ */
+const ctx=$('#ctx');
+$('#desktop').addEventListener('contextmenu', e=>{
+  e.preventDefault();
+  const d=$('#desktop').getBoundingClientRect();
+  ctx.style.left=Math.min(e.clientX-d.left, d.width-180)+'px';
+  ctx.style.top=Math.min(e.clientY-d.top, d.height-160)+'px';
+  ctx.classList.add('open'); sClick();
+});
+function hideCtx(){ ctx.classList.remove('open'); }
+
+/* ============ CRT toggle ============ */
+let crtOn=false;
+function toggleCrt(){ crtOn=!crtOn; $('#crt').classList.toggle('on',crtOn);
+  $('#crtBtn').style.opacity=crtOn?1:0.55; sClick(); }
+$('#crtBtn').style.opacity=0.55;
+$('#crtBtn').onclick=toggleCrt;
+
+/* ============ Sound toggle ============ */
+$('#soundBtn').onclick=()=>{ soundOn=!soundOn; $('#soundBtn').textContent=soundOn?'🔊':'🔇'; if(soundOn) sClick(); };
+
+/* ============ Onboarding helper ============ */
+const TIPS=[
+  '창의 <b>제목 표시줄을 드래그</b>해서 옮길 수 있어요.',
+  '<b>마우스 우클릭</b>으로 바탕화면 메뉴가 열립니다.',
+  '오른쪽 아래 <b>📺 아이콘</b>으로 CRT 모니터 감성을 켜보세요.',
+  '<b>볼륨 조절기</b>부터 도전해 보는 걸 추천해요!',
+];
+let tipIdx=0;
+function showHelper(){
+  $('#helperTip').innerHTML=TIPS[tipIdx];
+  $('#helper').classList.add('show');
+}
+$('#helperClose').onclick=()=>{ sClick();
+  tipIdx++;
+  if(tipIdx<TIPS.length){ $('#helperTip').innerHTML=TIPS[tipIdx]; }
+  else $('#helper').classList.remove('show');
+};
+
+/* ============ Actions ============ */
+function launch(url){ sOpen(); setTimeout(()=>{ location.href=url; }, 140); }
+
+function openApp(kind){
+  hideCtx(); toggleStart(false);
+  switch(kind){
+    case 'portal': showWindow(); break;
+    case 'about':
+      dialog({title:'시스템 정보', icon:'🖥️',
+        html:'<b>Bad UI Battles</b> v2.0<br>제작: yummy<br><br>상식을 파괴하는 인터페이스 컬렉션.<br>© 1995–2026. All wrongs reserved.'});
+      break;
+    case 'help':
+      dialog({title:'도움말', icon:'❓',
+        html:'각 배틀은 "쉬워 보이지만 절대 쉽지 않은" 미션입니다.<br><br>• 카드를 클릭해 실행<br>• 목표값에 맞추고 <b>확인</b><br>• 막히면… 그게 정상입니다 🙂'});
+      break;
+    case 'recycle':
+      dialog({title:'휴지통', icon:'🗑️', html:'휴지통이 비어 있습니다.<br>(당신의 인내심은 제외하고요.)'});
+      break;
+    case 'crt': toggleCrt(); break;
+    case 'shutdown':
+      dialog({title:'시스템 종료', icon:'⏻',
+        html:'정말 종료하시겠습니까?<br>아직 정복하지 못한 배틀이 남아 있습니다.',
+        buttons:[
+          {label:'종료', onClick:()=>shutdown()},
+          {label:'취소', primary:true}
+        ]});
+      break;
+  }
+}
+function shutdown(){
+  document.body.innerHTML='';
+  document.body.style.cssText='background:#000;color:#e8c000;display:flex;align-items:center;justify-content:center;height:100vh;font-family:sans-serif;text-align:center;padding:20px;';
+  document.body.innerHTML='<div><div style="font-size:40px">💤</div><br>이제 컴퓨터를 끄셔도 됩니다.<br><br><span style="font-size:12px;color:#888;cursor:pointer" onclick="location.reload()">(다시 켜기)</span></div>';
+}
+function notify(name){
+  toggleStart(false);
+  dialog({title:'출시 알림 신청', icon:'🔔',
+    html:`<b>${name}</b> 출시 시 알려드릴게요.<input id="notifyEmail" type="email" placeholder="이메일 입력 (데모)" autocomplete="off">`,
+    buttons:[
+      {label:'신청', primary:true, onClick:()=>dialog({title:'완료', icon:'✅', html:'신청되었습니다! (데모 — 실제 발송은 없습니다)'})},
+      {label:'취소'}
+    ]});
+}
+
+/* Delegate clicks for data-open / data-launch / data-notify / data-ctx / start items */
+document.addEventListener('click', e=>{
+  const o=e.target.closest('[data-open]'); if(o){ sClick(); openApp(o.dataset.open); return; }
+  const l=e.target.closest('[data-launch]'); if(l){ launch(l.dataset.launch); return; }
+  const n=e.target.closest('[data-notify]'); if(n){ e.preventDefault(); sClick(); notify(n.dataset.notify); return; }
+  const c=e.target.closest('[data-ctx]'); if(c){ doCtx(c.dataset.ctx); return; }
+});
+function doCtx(action){
+  hideCtx();
+  if(action==='refresh'){ document.querySelectorAll('.icon').forEach((i,k)=>{ i.style.opacity=0; setTimeout(()=>i.style.opacity=1, 60*k); }); sClick(); }
+  else if(action==='arrange'){ sClick(); }
+  else if(action==='crt'){ toggleCrt(); }
+  else if(action==='about'){ openApp('about'); }
+}
+
+/* Battle card: whole card launches (live) */
+document.querySelectorAll('.battle-item.live').forEach(card=>{
+  card.addEventListener('click', e=>{ if(e.target.closest('a,button')) return; launch(card.dataset.launch); });
+  card.addEventListener('keydown', e=>{ if(e.key==='Enter') launch(card.dataset.launch); });
+});
+
+/* Desktop icon: click select, double-click open; keyboard */
+let selIcon=null;
+document.querySelectorAll('.icon').forEach(ic=>{
+  ic.addEventListener('click', ()=>{ if(selIcon) selIcon.classList.remove('sel'); ic.classList.add('sel'); selIcon=ic; sClick(); });
+  ic.addEventListener('dblclick', ()=>{ const a=ic.getAttribute('href'); if(a){ launch(a); } else if(ic.dataset.open){ openApp(ic.dataset.open); } });
+  ic.addEventListener('keydown', e=>{ if(e.key==='Enter'){ const a=ic.getAttribute('href'); if(a) launch(a); else if(ic.dataset.open) openApp(ic.dataset.open); } });
+});
+/* prevent anchor icons from navigating on single click (use dbl/Enter) */
+document.querySelectorAll('a.icon').forEach(a=>a.addEventListener('click', e=>e.preventDefault()));
+
+/* ============ Clock ============ */
+function updateClock(){
+  const n=new Date();
+  let h=n.getHours(); const m=String(n.getMinutes()).padStart(2,'0');
+  const ap=h>=12?'PM':'AM'; h=h%12||12;
+  $('#clock').textContent=`${ap} ${h}:${m}`;
+  const days=['일','월','화','수','목','금','토'];
+  $('#clock').title=`${n.getFullYear()}년 ${n.getMonth()+1}월 ${n.getDate()}일 (${days[n.getDay()]})`;
+}
+setInterval(updateClock,1000); updateClock();
+
+/* ============ Init ============ */
+$('#count').textContent='총 3개 · 1개 플레이 가능';
+addEventListener('load', ()=>{ centerWindow(); renderTab(); });
+centerWindow(); renderTab();
+</script>
 </body>
 </html>

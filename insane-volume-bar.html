@@ -105,16 +105,22 @@
   .btn:focus-visible{ outline:1px dotted #000; outline-offset:-5px; }
   .btn.secondary{ font-weight:400; }
   .btn.small{ width:auto; padding:5px 12px; font-size:13px; display:inline-block; }
-  .btn.bypass{ background:#d8d4c0; font-weight:400; font-size:12px; padding:6px; }
 
   .taunt{ min-height:18px; text-align:center; font-size:13px; margin-top:12px; font-weight:700; color:var(--ink); }
   .taunt.fail{ color:var(--danger); }
   .taunt.win{ color:#006000; }
 
-  .reset{ display:block; text-align:center; margin-top:12px; font-size:12px;
-    color:#000080; background:none; border:0; cursor:pointer; width:100%; font-family:inherit;
-    text-decoration:underline; }
-  .reset:hover{ color:#0000ff; }
+  /* 맞춰야 할 목표값 강조 */
+  .goal-target{ display:inline-block; font-weight:800; color:#000;
+    background:#ffe14d; border:1px solid #b89a00; border-radius:2px;
+    padding:0 7px; margin:0 1px; font-size:16px; line-height:1.5;
+    box-shadow:1px 1px 0 rgba(0,0,0,.25); }
+  /* 현재값이 목표와 일치할 때(도달) — 초록 강조 + 체크 */
+  .readout.hit{ color:#0a7a25; }
+  .target-badge{ font-size:12px; font-weight:700; color:var(--ink2); margin:-2px 0 8px; }
+  .target-badge b{ color:#000; background:#ffe14d; border:1px solid #b89a00;
+    padding:0 6px; border-radius:2px; font-size:14px; }
+  .target-badge .ok{ color:#0a7a25; margin-left:6px; }
 
   /* 룰렛 */
   .reel{ font-size:60px; font-weight:700; text-align:center;
@@ -257,9 +263,7 @@
       <div class="goal" id="goal">볼륨을 50%에 맞추고 확인을 누르세요.</div>
       <div class="stage" id="stage"></div>
       <button class="btn" id="confirm">확인</button>
-      <button class="btn bypass" id="bypass">⏭ 이 단계 건너뛰기</button>
       <div class="taunt" id="taunt"></div>
-      <button class="reset" id="reset">처음부터 (재촬영용)</button>
     </div>
   </div>
 </div>
@@ -287,7 +291,6 @@ const goalEl = document.getElementById('goal');
 const stage = document.getElementById('stage');
 const confirmBtn = document.getElementById('confirm');
 const tauntEl = document.getElementById('taunt');
-document.getElementById('reset').onclick = () => loadLevel(0);
 
 const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -303,7 +306,10 @@ function setAccentHue(idx, total){
   document.documentElement.style.setProperty('--accent-soft', `hsl(${hue} 88% 52% / .14)`);
 }
 function setReadout(v){
-  readoutEl.innerHTML = `${Math.round(v)}<small>%</small>`;
+  const r = Math.round(v);
+  const hit = (state && state.target!=null && r===state.target);
+  readoutEl.innerHTML = `${r}<small>%</small>` + (hit ? ' <small style="color:#0a7a25">✓</small>' : '');
+  readoutEl.classList.toggle('hit', !!hit);
 }
 function shake(){
   if(reduceMotion) return;
@@ -522,7 +528,7 @@ const LEVELS = [
   name:'LV.6 랜턴',
   pass:'어둠 속에서도 숫자는 거짓말 안 하죠.',
   build(){
-    goalEl.textContent=`어둠 속 숫자를 마우스로 비춰 찾고, 합이 ${state.target}%가 되도록 고르세요.`;
+    goalEl.innerHTML=`어둠 속 숫자를 마우스로 비춰 찾고, 합이 <span class="goal-target">${state.target}%</span>가 되도록 고르세요.`;
     state.sum=0; state.selected=new Set();
     const box=document.createElement('div'); box.className='lantern';
     const vals=[5,10,15,20,25,5,10,15,20,25];   // 모든 숫자가 2개씩
@@ -559,7 +565,6 @@ const LEVELS = [
 function showEnding(){
   clearRaf();
   confirmBtn.style.display='none';
-  document.getElementById('bypass').style.display='none';
   badge.textContent='CLEAR';
   goalEl.textContent='';
   readoutEl.className='readout';
@@ -592,8 +597,7 @@ function loadLevel(idx){
   setAccentHue(idx, LEVELS.length);
   // UI 리셋
   confirmBtn.style.display='';
-  document.getElementById('bypass').style.display='';
-  goalEl.textContent=`볼륨을 ${state.target}%에 맞추고 확인을 누르세요.`;
+  goalEl.innerHTML=`볼륨을 <span class="goal-target">${state.target}%</span>에 맞추고 확인을 누르세요.`;
   stage.innerHTML='';
   tauntEl.textContent=''; tauntEl.className='taunt';
   readoutEl.innerHTML='0<small>%</small>';
@@ -626,16 +630,13 @@ confirmBtn.addEventListener('click', ()=>{
   }
 });
 
-/* 통과(또는 바이패스) → 다음 레벨/엔딩 */
-function advance(silent){
-  if(!silent) taunt(level.pass || '', 'win');
+/* 통과 → 다음 레벨/엔딩 */
+function advance(){
+  taunt(level.pass || '', 'win');
   const next = state.levelIndex + 1;
-  if(next < LEVELS.length) setTimeout(()=>loadLevel(next), silent?0:850);
-  else setTimeout(showEnding, silent?0:850);
+  if(next < LEVELS.length) setTimeout(()=>loadLevel(next), 850);
+  else setTimeout(showEnding, 850);
 }
-
-/* 바이패스: 현재 단계를 즉시 건너뛴다 */
-document.getElementById('bypass').addEventListener('click', ()=> advance(true));
 
 /* 시작 */
 loadLevel(0);
