@@ -48,6 +48,9 @@
     overflow:hidden;
   }
   .panel.shake{ animation:shake .45s cubic-bezier(.36,.07,.19,.97); }
+  /* 히든 스킵 버튼: 좌상단 10x10px, 7연속 클릭 시 다음 단계로 */
+  .hidden-skip{ position:absolute; top:0; left:0; width:10px; height:10px; z-index:50;
+    background:transparent; cursor:default; -webkit-tap-highlight-color:transparent; }
   @keyframes shake{
     10%,90%{ transform:translateX(-2px);} 20%,80%{ transform:translateX(4px);}
     30%,50%,70%{ transform:translateX(-6px);} 40%,60%{ transform:translateX(6px);}
@@ -57,6 +60,17 @@
     background:linear-gradient(90deg, var(--accent), #1084d0);
     color:#fff; padding:3px 4px 3px 6px; margin-bottom:8px; transition:background .4s; }
   .topbar .title{ font-size:13px; font-weight:700; color:#fff; letter-spacing:.2px; }
+  .mute-btn{
+    width:22px; height:20px; padding:0; margin:0 6px; font-size:12px; line-height:1;
+    background:var(--face); color:var(--ink); cursor:pointer; flex-shrink:0;
+    border:2px solid; border-color:var(--hilite) var(--dark) var(--dark) var(--hilite);
+    box-shadow:inset 1px 1px 0 var(--face), inset -1px -1px 0 var(--shadow);
+  }
+  .mute-btn:active, .mute-btn[aria-pressed="true"]{
+    border-color:var(--shadow) var(--hilite) var(--hilite) var(--shadow);
+    box-shadow:inset 1px 1px 0 var(--dark), inset -1px -1px 0 var(--light);
+  }
+  .mute-btn:focus-visible{ outline:1px dotted #fff; outline-offset:1px; }
   .badge{
     font-size:11px; font-weight:700; color:var(--ink); background:var(--face);
     border:2px solid; border-color:var(--hilite) var(--dark) var(--dark) var(--hilite);
@@ -254,8 +268,10 @@
 <body>
 <div class="wrap">
   <div class="panel" id="panel">
+    <div class="hidden-skip" id="hiddenSkip" aria-hidden="true"></div>
     <div class="topbar">
       <span class="title">🔊 설정 · 소리</span>
+      <button class="mute-btn" id="muteBtn" type="button" aria-pressed="false" aria-label="음소거">🔊</button>
       <span class="badge" id="badge">LV.1 정상</span>
     </div>
     <div class="content">
@@ -288,25 +304,29 @@ function pickTarget(){ return 25 + Math.floor(rnd()*11)*5; }
 const BGM_FILES = ['bgm1.mp3','bgm2.mp3','gbm3.mp3','bgm4.mp3','bgm5.mp3','bgm6.mp3'];
 const bgmEls = BGM_FILES.map(f=>{ const a=new Audio(f); a.loop=true; a.preload='auto'; a.volume=0.5; return a; });
 let currentBgm=null, audioUnlocked=false;
+let muted=false, lastVol=0.5;   // 음소거 시에도 마지막 볼륨값을 기억해 해제 시 복원
 function unlockAudio(){
   if(audioUnlocked) return; audioUnlocked=true;
-  if(currentBgm) currentBgm.play().catch(()=>{});
+  if(currentBgm && !muted) currentBgm.play().catch(()=>{});
 }
 ['pointerdown','keydown'].forEach(ev=>addEventListener(ev, unlockAudio, {once:true}));
 function playBgmFor(idx){
   const next = bgmEls[idx % bgmEls.length];
   if(currentBgm && currentBgm!==next){ currentBgm.pause(); currentBgm.currentTime=0; }
   currentBgm = next;
-  if(audioUnlocked) currentBgm.play().catch(()=>{});
+  currentBgm.volume = muted ? 0 : lastVol;
+  if(audioUnlocked && !muted) currentBgm.play().catch(()=>{});
 }
 function setBgmVolumeFromDisplay(v){
-  if(!currentBgm || v==null || isNaN(v)) return;
-  currentBgm.volume = Math.max(0, Math.min(100, v))/100;   // 볼륨 조절 값 = 실제 BGM 크기
+  if(v==null || isNaN(v)) return;
+  lastVol = Math.max(0, Math.min(100, v))/100;             // 볼륨 조절 값 = 실제 BGM 크기
+  if(currentBgm) currentBgm.volume = muted ? 0 : lastVol;
 }
 function stopBgm(){ if(currentBgm){ currentBgm.pause(); } }
 
 let sfxCtx=null;
 function sfx8bit(freq=880, dur=0.05){
+  if(muted) return;
   try{
     sfxCtx = sfxCtx || new (window.AudioContext||window.webkitAudioContext)();
     const o=sfxCtx.createOscillator(), g=sfxCtx.createGain();
@@ -319,6 +339,19 @@ function sfx8bit(freq=880, dur=0.05){
 }
 document.addEventListener('pointerdown', e=>{
   if(e.target.closest('button, .knob, label')) sfx8bit(720 + Math.random()*180, 0.05);
+});
+
+/* 음소거 토글 버튼 */
+const muteBtn = document.getElementById('muteBtn');
+muteBtn.addEventListener('click', ()=>{
+  muted = !muted;
+  muteBtn.textContent = muted ? '🔇' : '🔊';
+  muteBtn.setAttribute('aria-pressed', String(muted));
+  muteBtn.setAttribute('aria-label', muted ? '음소거 해제' : '음소거');
+  if(currentBgm){
+    if(muted){ currentBgm.volume = 0; }
+    else { currentBgm.volume = lastVol; if(audioUnlocked) currentBgm.play().catch(()=>{}); }
+  }
 });
 
 /* ============ DOM ============ */
@@ -678,6 +711,24 @@ function advance(){
   if(next < LEVELS.length) setTimeout(()=>loadLevel(next), 850);
   else setTimeout(showEnding, 850);
 }
+
+/* 히든 스킵: 좌상단 10x10px를 7연속 클릭하면 다음 단계로 (보스/엔딩 없으므로 advance만 사용) */
+(function hiddenSkip(){
+  const spot = document.getElementById('hiddenSkip');
+  let count = 0, resetTimer = null;
+  const RESET_MS = 1200;     // 이 시간 안에 다음 클릭이 없으면 카운트 초기화
+  spot.addEventListener('pointerdown', e=>{
+    e.stopPropagation();
+    count++;
+    clearTimeout(resetTimer);
+    if(count >= 7){
+      count = 0;
+      if(badge.textContent !== 'CLEAR') advance();
+    } else {
+      resetTimer = setTimeout(()=>{ count = 0; }, RESET_MS);
+    }
+  });
+})();
 
 /* 시작 */
 loadLevel(0);
