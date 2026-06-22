@@ -59,13 +59,19 @@
   .topbar{ display:flex; justify-content:space-between; align-items:center;
     background:linear-gradient(90deg, var(--accent), #1084d0);
     color:#fff; padding:3px 4px 3px 6px; margin-bottom:8px; transition:background .4s; }
-  .topbar .title{ font-size:13px; font-weight:700; color:#fff; letter-spacing:.2px; }
+  .topbar .title{ font-size:13px; font-weight:700; color:#fff; letter-spacing:.2px;
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0; }
+  /* 보조 컨트롤(음소거)은 화면 코너 — 주 조작부(슬라이더/확인)와 분리해 항상 같은 자리에 고정 */
+  .topbar-right{ display:flex; align-items:center; gap:6px; flex-shrink:0; margin-left:8px; }
   .mute-btn{
-    width:22px; height:20px; padding:0; margin:0 6px; font-size:12px; line-height:1;
+    width:26px; height:24px; padding:0; margin:0; font-size:13px; line-height:1;
     background:var(--face); color:var(--ink); cursor:pointer; flex-shrink:0;
     border:2px solid; border-color:var(--hilite) var(--dark) var(--dark) var(--hilite);
     box-shadow:inset 1px 1px 0 var(--face), inset -1px -1px 0 var(--shadow);
+    position:relative;
   }
+  /* 시각적 크기는 유지하되 탭 가능 영역은 더 넓게(모바일 터치 편의) */
+  .mute-btn::after{ content:''; position:absolute; inset:-6px; }
   .mute-btn:active, .mute-btn[aria-pressed="true"]{
     border-color:var(--shadow) var(--hilite) var(--hilite) var(--shadow);
     box-shadow:inset 1px 1px 0 var(--dark), inset -1px -1px 0 var(--light);
@@ -74,18 +80,31 @@
   .badge{
     font-size:11px; font-weight:700; color:var(--ink); background:var(--face);
     border:2px solid; border-color:var(--hilite) var(--dark) var(--dark) var(--hilite);
-    padding:1px 7px; white-space:nowrap; max-width:58%; overflow:hidden; text-overflow:ellipsis;
+    padding:1px 7px; white-space:nowrap; max-width:46vw; overflow:hidden; text-overflow:ellipsis;
   }
   .badge.pop{ animation:pop .35s ease; }
   @keyframes pop{ 0%{transform:scale(.7);opacity:.2} 60%{transform:scale(1.1)} 100%{transform:scale(1)} }
   /* 본문 패딩 */
   .content{ padding:10px 14px 12px; }
+  /* 진행도 표시 (몇 단계 중 몇 번째인지) */
+  .progress{ display:flex; gap:4px; align-items:center; margin:0 0 10px; }
+  .progress .seg{ flex:1; height:8px; background:#9a9a9a;
+    border:2px solid; border-color:var(--shadow) var(--hilite) var(--hilite) var(--shadow); }
+  .progress .seg.done{ background:#3aa856; }
+  .progress .seg.cur{ background:var(--accent); animation:segPulse 1.1s ease-in-out infinite; }
+  @keyframes segPulse{ 0%,100%{ filter:brightness(1); } 50%{ filter:brightness(1.5); } }
+  .progress .ptext{ font-size:11px; font-weight:700; color:var(--ink2); margin-left:4px;
+    white-space:nowrap; font-variant-numeric:tabular-nums; }
   .readout{ font-size:54px; font-weight:700; line-height:1; margin:2px 0 6px;
     font-variant-numeric:tabular-nums; background:var(--field);
     border:2px solid; border-color:var(--shadow) var(--hilite) var(--hilite) var(--shadow);
     padding:8px 12px; color:#000; }
   .readout small{ font-size:26px; font-weight:700; color:var(--ink2); margin-left:2px; }
   .goal{ font-size:13px; color:var(--ink); margin-bottom:16px; }
+  /* 여러 번 실패하면 나타나는 힌트 (막힘 방지) */
+  .hintbar{ font-size:12px; line-height:1.45; color:#5a4a00; background:#fffbe0;
+    border:1px solid #d9c34a; padding:7px 10px; margin:-6px 0 14px; }
+  .hintbar b{ color:#000; }
   .stage{ min-height:96px; display:flex; flex-direction:column; justify-content:center; margin-bottom:6px; }
 
   /* 커스텀 슬라이더 (Win95 트랙바) */
@@ -119,6 +138,9 @@
   .btn:focus-visible{ outline:1px dotted #000; outline-offset:-5px; }
   .btn.secondary{ font-weight:400; }
   .btn.small{ width:auto; padding:5px 12px; font-size:13px; display:inline-block; }
+  /* 목표 도달 시 확인 버튼이 "지금 누르세요" 신호 */
+  .btn.ready{ background:#d6f0d6; color:#0a5a1e; animation:readyPulse 1s ease-in-out infinite; }
+  @keyframes readyPulse{ 0%,100%{ background:#d6f0d6; } 50%{ background:#9fe0a6; } }
 
   .taunt{ min-height:18px; text-align:center; font-size:13px; margin-top:12px; font-weight:700; color:var(--ink); }
   .taunt.fail{ color:var(--danger); }
@@ -271,12 +293,16 @@
     <div class="hidden-skip" id="hiddenSkip" aria-hidden="true"></div>
     <div class="topbar">
       <span class="title">🔊 설정 · 소리</span>
-      <button class="mute-btn" id="muteBtn" type="button" aria-pressed="false" aria-label="음소거">🔊</button>
-      <span class="badge" id="badge">LV.1 정상</span>
+      <div class="topbar-right">
+        <span class="badge" id="badge">LV.1 정상</span>
+        <button class="mute-btn" id="muteBtn" type="button" title="음소거" aria-pressed="false" aria-label="음소거">🔊</button>
+      </div>
     </div>
     <div class="content">
+      <div class="progress" id="progress" aria-label="진행도"></div>
       <div class="readout" id="readout">0<small>%</small></div>
       <div class="goal" id="goal">볼륨을 50%에 맞추고 확인을 누르세요.</div>
+      <div class="hintbar" id="hintbar" hidden></div>
       <div class="stage" id="stage"></div>
       <button class="btn" id="confirm">확인</button>
       <div class="taunt" id="taunt"></div>
@@ -381,7 +407,38 @@ function setReadout(v){
   const hit = (state && state.target!=null && r===state.target);
   readoutEl.innerHTML = `${r}<small>%</small>` + (hit ? ' <small style="color:#0a7a25">✓</small>' : '');
   readoutEl.classList.toggle('hit', !!hit);
+  // 확인 버튼이 "지금이야!" 신호를 주도록 (액션 어포던스)
+  confirmBtn.classList.toggle('ready', !!hit);
+  confirmBtn.textContent = hit ? '확인 ✓' : '확인';
+  // 목표에 닿는 순간, 이전 실패 메시지(빨간 도발)가 남아 모순돼 보이는 문제 제거
+  if(hit && tauntEl.classList.contains('fail')){ tauntEl.textContent=''; tauntEl.className='taunt'; }
   setBgmVolumeFromDisplay(v);   // 표시값 그대로 실제 BGM 음량에 반영
+}
+/* 막힘 방지용 힌트 (레벨 이름 키워드로 매칭) */
+const HINTS = [
+  ['반전', '손잡이가 마우스와 <b>반대로</b> 움직여요. 원하는 방향의 <b>반대쪽</b>으로 미세요.'],
+  ['미끄럼', '손을 떼면 값이 <b>스르륵 줄어들어요</b>. 목표에 닿는 순간 떼지 말고 바로 <b>확인</b>!'],
+  ['새총', '당겼다 놓으면 <b>관성</b>으로 미끄러져요. 목표 근처에서 <b>아주 살살</b> 놓으세요.'],
+  ['도망', '커서가 다가가면 손잡이가 <b>도망</b>가요. 화면 끝으로 몰거나 재빨리 잡으세요.'],
+  ['미로', '뒤섞인 숫자 중 <b>목표 숫자</b>를 찾아 클릭하면 돼요.'],
+  ['랜턴', '<b>마우스로 비추며</b> 숨은 숫자를 찾고, 고른 숫자들의 <b>합</b>이 목표가 되게 하세요.'],
+];
+function showHint(){
+  const hb=document.getElementById('hintbar');
+  const name=level.name||'';
+  const found=HINTS.find(([k])=>name.includes(k));
+  hb.innerHTML='💡 <b>힌트</b> — ' + (found ? found[1] : '천천히, 한 번 더 시도해 보세요.');
+  hb.hidden=false;
+}
+function updateProgress(idx){
+  const total = LEVELS.length;
+  const p = document.getElementById('progress');
+  let segs='';
+  for(let i=0;i<total;i++){
+    const cls = i<idx ? 'done' : (i===idx ? 'cur' : '');
+    segs += `<span class="seg ${cls}"></span>`;
+  }
+  p.innerHTML = segs + `<span class="ptext">${idx+1} / ${total}</span>`;
 }
 function shake(){
   if(reduceMotion) return;
@@ -638,7 +695,11 @@ function showEnding(){
   clearRaf();
   stopBgm();   // 정복 완료 = 진짜 음소거
   confirmBtn.style.display='none';
+  confirmBtn.classList.remove('ready');
   badge.textContent='CLEAR';
+  document.getElementById('progress').innerHTML =
+    Array.from({length:LEVELS.length},()=>'<span class="seg done"></span>').join('')
+    + '<span class="ptext">CLEAR!</span>';
   goalEl.textContent='';
   readoutEl.className='readout';
   readoutEl.innerHTML='🔇';
@@ -671,6 +732,8 @@ function loadLevel(idx){
   playBgmFor(idx);   // 레벨마다 다른 BGM 반복재생
   // UI 리셋
   confirmBtn.style.display='';
+  confirmBtn.classList.remove('ready'); confirmBtn.textContent='확인';
+  document.getElementById('hintbar').hidden=true;
   goalEl.innerHTML=`볼륨을 <span class="goal-target">${state.target}%</span>에 맞추고 확인을 누르세요.`;
   stage.innerHTML='';
   tauntEl.textContent=''; tauntEl.className='taunt';
@@ -678,6 +741,7 @@ function loadLevel(idx){
   readoutEl.className='readout';
   badge.textContent=level.name;
   badge.classList.remove('pop'); void badge.offsetWidth; badge.classList.add('pop');
+  updateProgress(idx);
   level.build(stage);
 }
 
@@ -701,6 +765,8 @@ confirmBtn.addEventListener('click', ()=>{
     const cur = (d!=null && d>=0) ? Math.round(d) : '?';
     taunt(level.fail || `${state.target}%가 아니에요. (현재 ${cur}%)`, 'fail');
     if(level.onFail) level.onFail();
+    state.fails = (state.fails||0) + 1;     // 3번 이상 실패하면 힌트 노출
+    if(state.fails >= 3) showHint();
   }
 });
 
