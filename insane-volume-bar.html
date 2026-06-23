@@ -95,11 +95,25 @@
   @keyframes segPulse{ 0%,100%{ filter:brightness(1); } 50%{ filter:brightness(1.5); } }
   .progress .ptext{ font-size:11px; font-weight:700; color:var(--ink2); margin-left:4px;
     white-space:nowrap; font-variant-numeric:tabular-nums; }
-  .readout{ font-size:54px; font-weight:700; line-height:1; margin:2px 0 6px;
-    font-variant-numeric:tabular-nums; background:var(--field);
-    border:2px solid; border-color:var(--shadow) var(--hilite) var(--hilite) var(--shadow);
-    padding:8px 12px; color:#000; }
-  .readout small{ font-size:26px; font-weight:700; color:var(--ink2); margin-left:2px; }
+  /* 음악 플레이어풍 볼륨 디스플레이 + VU 미터 */
+  .readout{ background:var(--field); margin:2px 0 6px; padding:9px 12px 12px; color:#000;
+    border:2px solid; border-color:var(--shadow) var(--hilite) var(--hilite) var(--shadow); }
+  .player-head{ display:flex; align-items:center; gap:9px; line-height:1; }
+  .player-head .spk{ font-size:28px; flex-shrink:0; }
+  .player-head .vnum{ font-size:50px; font-weight:700; font-variant-numeric:tabular-nums; }
+  .player-head .vpct{ font-size:23px; font-weight:700; color:var(--ink2); margin-left:1px; }
+  .player-head .vcheck{ margin-left:auto; font-size:26px; font-weight:700; color:#0a7a25; }
+  .player-off{ font-size:46px; text-align:center; padding:6px; }
+  .vumeter{ position:relative; display:flex; gap:2px; height:24px; margin-top:10px;
+    background:#0d0d0d; padding:3px;
+    border:2px solid; border-color:var(--shadow) var(--hilite) var(--hilite) var(--shadow); }
+  .vumeter .vseg{ flex:1 1 0; background:#1f2a1f; border-radius:1px; transition:background .05s, box-shadow .05s; }
+  .vumeter .vseg.on{ background:#39d353; box-shadow:0 0 3px #39d353; }
+  .vumeter .vseg.on.mid{ background:#ffd23f; box-shadow:0 0 3px #ffd23f; }
+  .vumeter .vseg.on.hi{ background:#ff4d4d; box-shadow:0 0 4px #ff4d4d; }
+  .vumeter .vtick{ position:absolute; top:-4px; bottom:-4px; width:3px; background:#fff;
+    box-shadow:0 0 0 1px #000; transform:translateX(-50%); z-index:2; pointer-events:none; }
+  .readout.hit .vumeter{ outline:2px solid #0a7a25; outline-offset:1px; }
   .goal{ font-size:13px; color:var(--ink); margin-bottom:16px; }
   /* 여러 번 실패하면 나타나는 힌트 (막힘 방지) */
   .hintbar{ font-size:12px; line-height:1.45; color:#5a4a00; background:#fffbe0;
@@ -216,15 +230,6 @@
   /* 노브 위 글리프 */
   .knob[data-ico]::after{ content:attr(data-ico); position:absolute; inset:0;
     display:flex; align-items:center; justify-content:center; font-size:13px; }
-  /* LV3 빙판 */
-  .slider.ice .track{ background:repeating-linear-gradient(115deg,#cfeaff,#cfeaff 8px,#a9d6ff 8px,#a9d6ff 16px);
-    border-color:#7fb0e0 #fff #fff #7fb0e0; }
-  .slider.ice .fill{ background:rgba(120,180,255,.5); }
-  /* LV4 새총 고무줄 */
-  .band{ position:absolute; top:50%; height:2px; background:#553; transform-origin:left center; pointer-events:none; }
-  .anchor{ position:absolute; top:50%; width:8px; height:18px; background:var(--face);
-    border:2px solid; border-color:var(--hilite) var(--dark) var(--dark) var(--hilite);
-    transform:translateY(-50%); }
   /* LV6 글리치 LCD */
   .readout.glitch{ color:#aa0000; text-shadow:1.5px 0 #00d, -1.5px 0 #d00; animation:glitch .14s steps(2,end) infinite; }
   @keyframes glitch{ 0%{transform:translate(0,0)} 33%{transform:translate(-1.5px,1px)} 66%{transform:translate(1.5px,-1px)} 100%{transform:translate(0,0)} }
@@ -255,7 +260,6 @@
   .balloon-stage{ text-align:center; }
   .balloon-stage .balloon{ display:inline-block; line-height:1; transition:transform .08s; transform-origin:bottom center; }
   .balloon-stage .target{ font-size:11px; color:var(--ink2); margin-top:4px; }
-  .pump{ background:#d8d4c0 !important; }
   /* LV13 진자 */
   .pendulum{ position:relative; height:120px; margin:4px 0; }
   .pendulum svg{ position:absolute; inset:0; width:100%; height:100%; }
@@ -264,25 +268,83 @@
   .hexval{ font-family:"Courier New",monospace; text-align:center; font-size:15px; font-weight:700;
     margin:6px 0 2px; letter-spacing:1px; }
   .chan-tag{ width:16px; font-weight:700; text-align:center; }
-  /* LV 랜턴 (암흑 + 손전등) */
-  .lantern{ position:relative; height:230px; background:#000; overflow:hidden;
+  /* LV 랜턴 (암흑 + 손전등, 넓은 스크롤 영역) */
+  .lantern-wrap{ position:relative; height:230px;
     border:2px solid; border-color:var(--shadow) var(--hilite) var(--hilite) var(--shadow); }
+  .lantern{ position:absolute; inset:0; background:#000; overflow:auto; }
+  .lantern .lfield{ position:relative; width:100%; }
   .lantern .num{ position:absolute; font-family:"Courier New",monospace; font-weight:700;
-    font-size:19px; color:#bdbdbd; cursor:pointer; padding:4px 7px; user-select:none;
+    font-size:18px; color:#cfcfcf; cursor:pointer; padding:3px 6px; user-select:none;
     transform:translate(-50%,-50%); }
-  .lantern .num.sel{ color:#ffd23f; text-shadow:0 0 7px #ffd23f; }
-  .lantern .beam{ position:absolute; inset:0; pointer-events:none;
-    background:radial-gradient(circle 64px at var(--mx,50%) var(--my,50%),
-      rgba(0,0,0,0) 0%, rgba(0,0,0,.6) 55%, #000 100%); }
+  .lantern .num.sel{ color:#ffd23f; text-shadow:0 0 8px #ffd23f; }
+  .lantern-wrap .beam{ position:absolute; inset:0; pointer-events:none; z-index:3;
+    background:radial-gradient(circle 58px at var(--mx,50%) var(--my,50%),
+      rgba(0,0,0,0) 0%, rgba(0,0,0,.65) 52%, #000 100%); }
+  .lantern-wrap .scrollhint{ position:absolute; right:6px; bottom:4px; z-index:4; font-size:10px;
+    color:#888; pointer-events:none; }
+  /* LV 일식 */
+  .eclipse{ position:relative; height:170px; background:#0a0a1c; overflow:hidden;
+    border:2px solid; border-color:var(--shadow) var(--hilite) var(--hilite) var(--shadow); }
+  .eclipse svg{ width:100%; height:100%; touch-action:none; display:block; }
+  .eclipse #ecMoon{ cursor:grab; }
+  .eclipse #ecMoon:active{ cursor:grabbing; }
+  /* LV 튜브 (가로 원통 속 공, 무게 조절은 세로 드래그) */
+  .tube-wrap{ position:relative; height:90px; margin:14px 0 6px; display:flex; align-items:center;
+    touch-action:none; cursor:ns-resize; user-select:none; }
+  .tube{ position:relative; width:100%; height:32px; border-radius:16px; transition:transform .04s;
+    background:linear-gradient(180deg,#eee,#bdbdbd 45%,#909090);
+    border:2px solid var(--shadow); box-shadow:inset 0 2px 3px rgba(255,255,255,.5), inset 0 -3px 4px rgba(0,0,0,.3); }
+  .tube .ttarget{ position:absolute; top:-7px; bottom:-7px; width:3px; background:#0a8a30; transform:translateX(-50%); }
+  .tube .tball{ position:absolute; top:50%; width:26px; height:26px; border-radius:50%;
+    transform:translate(-50%,-50%); pointer-events:none;
+    background:radial-gradient(circle at 35% 30%, #fff, var(--accent) 72%);
+    border:2px solid var(--dark); box-shadow:1px 2px 3px rgba(0,0,0,.45); }
+  /* LV 펌프 (세로 T손잡이 펌프) */
+  .pump2{ position:relative; width:130px; height:248px; margin:6px auto 2px; touch-action:none; user-select:none; }
+  .pump2 .p-handle{ position:absolute; left:50%; top:0; transform:translateX(-50%); cursor:grab; z-index:1; will-change:transform; }
+  .pump2 .p-handle:active{ cursor:grabbing; }
+  .pump2 .p-bar{ width:96px; height:15px; border-radius:8px; background:linear-gradient(180deg,#c8c8c8,#6f6f6f);
+    border:2px solid var(--shadow); box-shadow:inset 0 1px 0 #fff; }
+  .pump2 .p-shaft{ width:10px; height:118px; margin:0 auto; border-radius:0 0 3px 3px;
+    background:linear-gradient(90deg,#7a7a7a,#d8d8d8 50%,#7a7a7a); }
+  .pump2 .p-cyl{ position:absolute; left:50%; bottom:0; transform:translateX(-50%); width:76px; height:150px; z-index:2;
+    background:#e7e3d4; border:3px solid #8a8a8a; border-radius:10px; overflow:hidden;
+    box-shadow:inset 0 2px 5px rgba(0,0,0,.3); }
+  .pump2 .p-fill{ position:absolute; left:0; right:0; bottom:0; background:linear-gradient(0deg,#23b03a,#7fe08a); }
+  .pump2 .p-num{ position:absolute; left:0; right:0; top:10px; text-align:center; font-weight:700; font-size:24px;
+    color:#3a3a3a; font-variant-numeric:tabular-nums; z-index:1; text-shadow:0 1px 0 rgba(255,255,255,.6); }
+  /* LV 원주율 */
+  .pi-wrap{ display:flex; flex-direction:column; gap:8px; }
+  .pi-ref{ font-family:"Courier New",monospace; font-size:12px; color:#555; word-break:break-all;
+    background:var(--field); padding:6px; max-height:64px; overflow:auto;
+    border:2px solid; border-color:var(--shadow) var(--hilite) var(--hilite) var(--shadow); }
+  .pi-input{ font-family:"Courier New",monospace; font-size:16px; padding:7px; width:100%;
+    border:2px solid; border-color:var(--shadow) var(--hilite) var(--hilite) var(--shadow); }
+  .pi-input.bad{ background:#ffdede; color:#a00; }
+  /* LV 공쏟기 */
+  .balls{ display:flex; justify-content:center; }
+  .balls canvas{ background:#0c1418; image-rendering:auto; max-width:100%;
+    border:2px solid; border-color:var(--shadow) var(--hilite) var(--hilite) var(--shadow); }
+  /* LV 포대(대포) */
+  .cannon{ display:flex; flex-direction:column; align-items:center; }
+  .cannon canvas{ background:#0c1418; image-rendering:auto; max-width:100%; touch-action:none; cursor:pointer;
+    border:2px solid; border-color:var(--shadow) var(--hilite) var(--hilite) var(--shadow); }
+  .cannon .hintline{ font-size:11px; color:var(--ink2); margin-top:4px; }
+  /* LV 타이밍 잠금 */
+  .timing{ position:relative; height:34px; background:var(--field); overflow:hidden; margin:6px 0 12px;
+    border:2px solid; border-color:var(--shadow) var(--hilite) var(--hilite) var(--shadow); }
+  .timing .ctarget{ position:absolute; top:0; bottom:0; width:4px; background:#0a8a30; }
+  .timing .cmark{ position:absolute; top:0; bottom:0; width:5px; background:#cc0000; }
   /* 엔딩 = 시스템 종료 화면 */
   .shutdown{ background:var(--accent); color:#fff; text-align:center; padding:24px 10px; margin:-4px; }
   .shutdown .logo{ font-size:40px; }
 
   @media (prefers-reduced-motion: reduce){
     .panel.shake{ animation:none; }
-    .monster.hit{ animation:none; }
     .badge.pop{ animation:none; }
     .readout.glitch{ animation:none; }
+    .btn.ready{ animation:none; }
+    .progress .seg.cur{ animation:none; }
     .confetti{ display:none !important; }
   }
 </style>
@@ -300,11 +362,12 @@
     </div>
     <div class="content">
       <div class="progress" id="progress" aria-label="진행도"></div>
-      <div class="readout" id="readout">0<small>%</small></div>
+      <div class="readout" id="readout"></div>
       <div class="goal" id="goal">볼륨을 50%에 맞추고 확인을 누르세요.</div>
       <div class="hintbar" id="hintbar" hidden></div>
       <div class="stage" id="stage"></div>
       <button class="btn" id="confirm">확인</button>
+      <button class="btn secondary small" id="resetVol" style="margin-top:6px;">↺ 볼륨 0으로 초기화</button>
       <div class="taunt" id="taunt"></div>
     </div>
   </div>
@@ -325,10 +388,14 @@ const rnd = Math.random; // 게임플레이용 진짜 랜덤(룰렛 등)
 /* 레벨마다 맞춰야 할 목표 볼륨%를 랜덤 추첨 (25~75, 5단위 → 모든 레벨에서 도달 가능) */
 function pickTarget(){ return 25 + Math.floor(rnd()*11)*5; }
 
+/* 원주율 소수점 아래 80자리 (LV.11) */
+const PI_DIGITS = "14159265358979323846264338327950288419716939937510582097494459230781640628620899";
+
 /* ============ BGM (레벨별 6곡, 반복재생) + 8비트 버튼 SFX ============ */
 // 레벨 순서(LV.1~LV.6)에 맞춰 1곡씩 매칭. (3번째 파일은 원본명이 gbm3.mp3 라 그대로 사용)
 const BGM_FILES = ['bgm1.mp3','bgm2.mp3','gbm3.mp3','bgm4.mp3','bgm5.mp3','bgm6.mp3'];
-const bgmEls = BGM_FILES.map(f=>{ const a=new Audio(f); a.loop=true; a.preload='auto'; a.volume=0.5; return a; });
+// 대용량 6곡(~14MB)을 한꺼번에 받지 않도록 지연 로딩. 각 곡은 처음 재생될 때 로드된다.
+const bgmEls = BGM_FILES.map(f=>{ const a=new Audio(); a.src=f; a.loop=true; a.preload='none'; a.volume=0.5; return a; });
 let currentBgm=null, audioUnlocked=false;
 let muted=false, lastVol=0.5;   // 음소거 시에도 마지막 볼륨값을 기억해 해제 시 복원
 function unlockAudio(){
@@ -378,12 +445,39 @@ muteBtn.addEventListener('click', ()=>{
     if(muted){ currentBgm.volume = 0; }
     else { currentBgm.volume = lastVol; if(audioUnlocked) currentBgm.play().catch(()=>{}); }
   }
+  if(spkEl) spkEl.textContent = spkGlyph(Math.round(lastVol*100));   // 디스플레이 스피커 아이콘 즉시 갱신
 });
 
 /* ============ DOM ============ */
 const panel = document.getElementById('panel');
 const badge = document.getElementById('badge');
 const readoutEl = document.getElementById('readout');
+/* 음악 플레이어풍 볼륨 디스플레이: 스피커 아이콘 + 숫자 + LED VU 미터 */
+const VSEGS = 24;
+let vsegEls = [], spkEl = null, vnumEl = null, vcheckEl = null, vtickEl = null;
+function buildPlayer(){
+  readoutEl.className = 'readout';
+  readoutEl.innerHTML =
+    `<div class="player-head">
+       <span class="spk" id="spk">🔇</span>
+       <span class="vnum" id="vnum">0</span><span class="vpct">%</span>
+       <span class="vcheck" id="vcheck"></span>
+     </div>
+     <div class="vumeter" id="vumeter"><div class="vtick" id="vtick"></div></div>`;
+  spkEl = readoutEl.querySelector('#spk'); vnumEl = readoutEl.querySelector('#vnum');
+  vcheckEl = readoutEl.querySelector('#vcheck'); vtickEl = readoutEl.querySelector('#vtick');
+  const meter = readoutEl.querySelector('#vumeter');
+  vsegEls = [];
+  for(let i=0;i<VSEGS;i++){ const s=document.createElement('div'); s.className='vseg'; meter.appendChild(s); vsegEls.push(s); }
+}
+function spkGlyph(v){ if(muted || v<1) return '🔇'; if(v<34) return '🔈'; if(v<67) return '🔉'; return '🔊'; }
+function updateMeter(v){
+  if(!vsegEls.length) return;
+  const on = Math.round(Math.max(0,Math.min(100,v))/100*VSEGS);
+  for(let i=0;i<VSEGS;i++){ const frac=i/VSEGS;
+    vsegEls[i].className = 'vseg' + (i<on ? (' on'+(frac>=0.85?' hi':frac>=0.6?' mid':'')) : ''); }
+}
+buildPlayer();
 const goalEl = document.getElementById('goal');
 const stage = document.getElementById('stage');
 const confirmBtn = document.getElementById('confirm');
@@ -403,9 +497,15 @@ function setAccentHue(idx, total){
   document.documentElement.style.setProperty('--accent-soft', `hsl(${hue} 88% 52% / .14)`);
 }
 function setReadout(v){
-  const r = Math.round(v);
-  const hit = (state && state.target!=null && r===state.target);
-  readoutEl.innerHTML = `${r}<small>%</small>` + (hit ? ' <small style="color:#0a7a25">✓</small>' : '');
+  const dn = (state && state.decimals)|0;                 // 소수 표시 자릿수(0=정수)
+  const shown = dn>0 ? v.toFixed(dn) : Math.round(v);
+  const tol = dn>0 ? 0.5*Math.pow(10,-dn) : 0;            // 2자리=±0.005 (그 자리까지 정확히)
+  const hit = (state && state.target!=null &&
+    (dn>0 ? Math.abs(v-state.target)<tol : Math.round(v)===state.target));
+  if(vnumEl) vnumEl.textContent = shown;
+  if(spkEl) spkEl.textContent = spkGlyph(v);
+  if(vcheckEl) vcheckEl.textContent = hit ? '✓' : '';
+  updateMeter(v);
   readoutEl.classList.toggle('hit', !!hit);
   // 확인 버튼이 "지금이야!" 신호를 주도록 (액션 어포던스)
   confirmBtn.classList.toggle('ready', !!hit);
@@ -416,12 +516,15 @@ function setReadout(v){
 }
 /* 막힘 방지용 힌트 (레벨 이름 키워드로 매칭) */
 const HINTS = [
-  ['반전', '손잡이가 마우스와 <b>반대로</b> 움직여요. 원하는 방향의 <b>반대쪽</b>으로 미세요.'],
-  ['미끄럼', '손을 떼면 값이 <b>스르륵 줄어들어요</b>. 목표에 닿는 순간 떼지 말고 바로 <b>확인</b>!'],
-  ['새총', '당겼다 놓으면 <b>관성</b>으로 미끄러져요. 목표 근처에서 <b>아주 살살</b> 놓으세요.'],
   ['도망', '커서가 다가가면 손잡이가 <b>도망</b>가요. 화면 끝으로 몰거나 재빨리 잡으세요.'],
   ['미로', '뒤섞인 숫자 중 <b>목표 숫자</b>를 찾아 클릭하면 돼요.'],
-  ['랜턴', '<b>마우스로 비추며</b> 숨은 숫자를 찾고, 고른 숫자들의 <b>합</b>이 목표가 되게 하세요.'],
+  ['랜턴', '어두운 영역을 <b>스크롤</b>하며 비춰 숨은 숫자를 찾고, 고른 숫자들의 <b>합</b>이 목표가 되게 하세요.'],
+  ['일식', '달을 <b>아주 조금씩</b> 드래그하세요. 소수 둘째 자리까지 정확해야 통과!'],
+  ['튜브', '<b>위아래로</b> 드래그해 가로 튜브를 기울이고, <b>수평으로 두면</b> 공이 멈춰요. 목표에서 멈추세요.'],
+  ['펌프', '손잡이를 <b>위아래로 계속</b> 움직여 채우고, 목표에서 바로 확인하세요.'],
+  ['공쏟기', '밸브를 <b>짧게 톡톡</b> 눌러 공 개수를 조절하세요. 한꺼번에 쏟으면 넘쳐요.'],
+  ['타이밍', '마커가 좌우로 왕복해요. <b>목표 칸에 올 때 "멈추기"</b>를 누르세요.'],
+  ['포대', '<b>오래 누를수록 멀리</b> 날아가요. 노란 깃발에 떨어지게 파워를 조절해 손을 떼세요.'],
 ];
 function showHint(){
   const hb=document.getElementById('hintbar');
@@ -475,7 +578,8 @@ function makeSlider(opts={}){
     knob.style.left = px + 'px';
     fill.style.width = px + 'px';
     knob.setAttribute('aria-valuenow', Math.round(s.displayValue()));
-    if(opts.onChange) opts.onChange(s);
+    // 이전 레벨에서 떼어진(detached) 슬라이더가 공용 리드아웃을 덮어쓰지 않도록 가드
+    if(opts.onChange && el.isConnected) opts.onChange(s);
   }
   s.render = render;
   function valueFromX(clientX){
@@ -506,13 +610,6 @@ function makeSlider(opts={}){
   return s;
 }
 
-/* 눈금자 행 (rev=역방향) */
-function tickRow(rev){
-  const d=document.createElement('div'); d.className='ticks'+(rev?' rev':'');
-  d.innerHTML='<span>0</span><span>50</span><span>100</span>';
-  return d;
-}
-
 /* 꽃가루 */
 function confetti(){
   if(reduceMotion) return;
@@ -532,80 +629,8 @@ function confetti(){
    각 레벨: { name, goal, build(stage)->설정, getDisplay()->표시값 or null(자체 win),
               win() optional override, onConfirm() optional, pass(통과도발) } */
 const LEVELS = [
-/* LV.2 반전 (손잡이가 마우스 방향과 반대로 이동) */{
-  name:'LV.1 좌우반전',
-  pass:'왼쪽이 오른쪽이고 오른쪽이 왼쪽이에요. 화이팅.',
-  build(){
-    const sl = makeSlider({ invert:true, onChange:s=>setReadout(s.displayValue()) });
-    sl.knob.setAttribute('data-ico','⇄');
-    stage.appendChild(sl.el);
-    stage.appendChild(tickRow(true));   // 거울 반전된 눈금
-    state.sl = sl;
-  },
-  getDisplay(){ return state.sl.displayValue(); }
-},
-/* 2: LV.3 미끄럼 */{
-  name:'LV.2 미끄럼틀',
-  pass:'손 떼는 순간 다 잃는 거예요. 인생처럼.',
-  build(){
-    const sl = makeSlider({ onChange:s=>setReadout(s.displayValue()) });
-    sl.el.classList.add('ice');          // 빙판 트랙
-    sl.knob.setAttribute('data-ico','❄');
-    stage.appendChild(sl.el); state.sl = sl;
-    let last = performance.now();
-    function loop(t){
-      const dt = (t-last)/1000; last=t;
-      if(!sl.dragging && sl.value>0){
-        sl.setValue(sl.value - 10.5*dt);   // 약 10.5/초 감소 (기존 35에서 70% 감소)
-      }
-      rafId = requestAnimationFrame(loop);
-    }
-    rafId = requestAnimationFrame(loop);
-  },
-  getDisplay(){ return state.sl.displayValue(); }
-},
-/* 3: LV.4 새총 */{
-  name:'LV.3 새총',
-  pass:'이걸 맞추네… 운이 좋으시네요.',
-  fail:'50 근처에도 못 갔는데요?',
-  build(){
-    const sl = makeSlider({ onChange:s=>setReadout(s.displayValue()) });
-    sl.knob.setAttribute('data-ico','✊');
-    stage.appendChild(sl.el); state.sl = sl;
-    // 고무줄: 왼쪽 앵커 → 손잡이
-    const anchor=document.createElement('div'); anchor.className='anchor'; anchor.style.left='0px';
-    const band=document.createElement('div'); band.className='band';
-    sl.el.append(anchor, band);
-    function drawBand(){
-      const kx=parseFloat(sl.knob.style.left)||0;
-      const len=Math.max(0,kx);
-      band.style.width=len+'px'; band.style.left='2px';
-    }
-    let vel = 0, last=performance.now(), prevVal=0, prevT=last;
-    sl.opts.onChange = s=>{ setReadout(s.displayValue()); drawBand();
-      const now=performance.now(); const dt=(now-prevT)/1000;
-      if(dt>0 && s.dragging){ vel = (s.value-prevVal)/dt * 1.3; }  // 30% 더 민감하게
-      prevVal=s.value; prevT=now;
-    };
-    requestAnimationFrame(drawBand);
-    sl.opts.onRelease = ()=>{ /* 관성 발사: vel 유지 */ };
-    function loop(t){
-      const dt=Math.min(0.05,(t-last)/1000); last=t;
-      if(!sl.dragging){
-        sl.value = Math.max(0,Math.min(100, sl.value + vel*dt));
-        vel *= Math.pow(0.12, dt);  // 마찰
-        if(Math.abs(vel)<0.5) vel=0;
-        sl.render();
-      }
-      rafId=requestAnimationFrame(loop);
-    }
-    rafId=requestAnimationFrame(loop);
-  },
-  getDisplay(){ return state.sl.displayValue(); },
-  win(d){ return Math.round(d)===state.target; }   // 정확히 목표값 (예민)
-},
 /* 4: LV.5 도망 */{
-  name:'LV.4 도망',
+  name:'LV.1 도망',
   pass:'버튼도 가끔은 당신을 피하고 싶어요.',
   build(){
     const sl = makeSlider({ onChange:s=>setReadout(s.displayValue()) });
@@ -628,7 +653,7 @@ const LEVELS = [
   getDisplay(){ return state.sl.displayValue(); }
 },
 /* LV.8 라디오 미로 */{
-  name:'LV.5 미로',
+  name:'LV.2 미로',
   pass:'이 안에 50이 있긴 했죠? 거 봐요.',
   build(){
     state.picked = null;
@@ -654,32 +679,41 @@ const LEVELS = [
   getDisplay(){ return state.picked==null ? -1 : state.picked; }
 },
 /* LV.15 랜턴 — 암흑 속 숫자 조합 */{
-  name:'LV.6 랜턴',
+  name:'LV.3 랜턴',
   pass:'어둠 속에서도 숫자는 거짓말 안 하죠.',
   build(){
-    goalEl.innerHTML=`어둠 속 숫자를 마우스로 비춰 찾고, 합이 <span class="goal-target">${state.target}%</span>가 되도록 고르세요.`;
+    goalEl.innerHTML=`어둠 속을 <b>스크롤</b>하며 숫자를 비춰 찾고, 합이 <span class="goal-target">${state.target}%</span>가 되도록 고르세요.`;
     state.sum=0; state.selected=new Set();
+    const wrap=document.createElement('div'); wrap.className='lantern-wrap';
     const box=document.createElement('div'); box.className='lantern';
-    const vals=[5,10,15,20,25,5,10,15,20,25];   // 모든 숫자가 2개씩
-    for(let i=vals.length-1;i>0;i--){ const j=Math.floor(rnd()*(i+1)); [vals[i],vals[j]]=[vals[j],vals[i]]; }
-    vals.forEach(v=>{
+    const field=document.createElement('div'); field.className='lfield';
+    const FIELD_H=1300;                  // 넓게 확장된 세로 스크롤 영역
+    field.style.height=FIELD_H+'px';
+    // 1단위로 다양한 숫자를 많이 흩뿌림 (작은 수 위주라 조합으로 목표 도달 가능)
+    const COUNT=70;
+    for(let i=0;i<COUNT;i++){
+      const v=1+Math.floor(rnd()*12);    // 1~12, 1단위
       const n=document.createElement('div'); n.className='num'; n.textContent=v;
-      n.style.left=(10+rnd()*80)+'%'; n.style.top=(12+rnd()*76)+'%';
+      n.style.left=(8+rnd()*84)+'%';
+      n.style.top=(2+rnd()*96)+'%';
       n.onclick=()=>{
         if(state.selected.has(n)){ state.selected.delete(n); n.classList.remove('sel'); }
         else { state.selected.add(n); n.classList.add('sel'); }
         state.sum=[...state.selected].reduce((a,e)=>a+ +e.textContent,0);
         setReadout(state.sum);
       };
-      box.appendChild(n);
-    });
-    const beam=document.createElement('div'); beam.className='beam'; box.appendChild(beam);
-    box.addEventListener('pointermove', e=>{
-      const r=box.getBoundingClientRect();
+      field.appendChild(n);
+    }
+    box.appendChild(field);
+    const beam=document.createElement('div'); beam.className='beam';
+    const hint=document.createElement('div'); hint.className='scrollhint'; hint.textContent='↕ 스크롤';
+    wrap.append(box, beam, hint);
+    wrap.addEventListener('pointermove', e=>{
+      const r=wrap.getBoundingClientRect();
       beam.style.setProperty('--mx',(e.clientX-r.left)+'px');
       beam.style.setProperty('--my',(e.clientY-r.top)+'px');
     });
-    stage.appendChild(box);
+    stage.appendChild(wrap);
     const clr=document.createElement('button'); clr.className='btn small secondary'; clr.textContent='선택 초기화';
     clr.style.marginTop='10px';
     clr.onclick=()=>{ state.selected.forEach(n=>n.classList.remove('sel')); state.selected.clear(); state.sum=0; setReadout(0); };
@@ -687,6 +721,266 @@ const LEVELS = [
     setReadout(0);
   },
   getDisplay(){ return state.sum; }
+},
+/* LV.7 일식 — 두 원의 교집합 면적 = 볼륨 */{
+  name:'LV.4 일식',
+  pass:'해와 달이 겹치듯, 볼륨도 겹쳤네요.',
+  fail:'소수점 둘째 자리까지 정확히! 아주 미세하게 움직이세요.',
+  win(d){ return d!=null && Math.abs(d-state.target)<0.005; },   // 0.01 단위, 둘째 자리까지 정확히
+  build(){
+    state.decimals=2;                                            // 0.01 단위로 표시·판정
+    goalEl.innerHTML=`달을 움직여 가려진 면적을 <span class="goal-target">${state.target}%</span>로. <b>소수점 둘째 자리(0.01)까지 정확히</b> 맞춰야 통과!`;
+    const box=document.createElement('div'); box.className='eclipse';
+    const R=44, cx0=100, cy0=64;
+    box.innerHTML=`<svg viewBox="0 0 200 128">
+      <circle cx="${cx0}" cy="${cy0}" r="${R}" fill="#ffcb33" stroke="#c79a00" stroke-width="1.5"/>
+      <circle id="ecMoon" cx="36" cy="64" r="${R}" fill="#33333f" stroke="#000" stroke-width="1.5"/>
+    </svg>`;
+    stage.appendChild(box);
+    const svg=box.querySelector('svg'), moon=box.querySelector('#ecMoon');
+    state.moon={x:36,y:64}; state.eclipse=0;
+    const full=Math.PI*R*R;
+    function area(d){ if(d>=2*R) return 0; if(d<=0) return full;
+      return 2*R*R*Math.acos(d/(2*R)) - (d/2)*Math.sqrt(Math.max(0,4*R*R-d*d)); }
+    function pctAt(d){ return area(d)/full*100; }
+    function draw(){ moon.setAttribute('cx',state.moon.x); moon.setAttribute('cy',state.moon.y); setReadout(state.eclipse); }
+    function setFromMoon(){ const dx=state.moon.x-cx0, dy=state.moon.y-cy0;
+      state.eclipse=Math.round(pctAt(Math.hypot(dx,dy))*100)/100; draw(); }   // 0.01 격자에 스냅
+    let dragging=false, lastX=0, lastY=0;
+    const FINE=0.13;                            // 매우 둔감하게 → 미세 드래그로 0.01 조절
+    function toSvg(e){ const r=svg.getBoundingClientRect();
+      return {x:(e.clientX-r.left)/r.width*200, y:(e.clientY-r.top)/r.height*128}; }
+    moon.addEventListener('pointerdown',e=>{ dragging=true; const p=toSvg(e); lastX=p.x; lastY=p.y; moon.setPointerCapture(e.pointerId); });
+    svg.addEventListener('pointermove',e=>{ if(!dragging)return; const p=toSvg(e);
+      state.moon.x=Math.max(0,Math.min(200,state.moon.x+(p.x-lastX)*FINE));
+      state.moon.y=Math.max(0,Math.min(128,state.moon.y+(p.y-lastY)*FINE));
+      lastX=p.x; lastY=p.y; setFromMoon(); });
+    const end=()=>dragging=false; moon.addEventListener('pointerup',end); moon.addEventListener('pointercancel',end);
+    setFromMoon();
+  },
+  getDisplay(){ return state.eclipse; }
+},
+/* LV.9 시소 — 값이 클수록 더 빨리 미끄러져 내려감 */{
+  name:'LV.5 튜브',
+  pass:'굴러다니는 공을 딱 멈춰 세우다니, 신기 들었네요.',
+  build(){
+    goalEl.innerHTML=`튜브를 <b>위아래로</b> 움직여 기울이고, 굴러다니는 공을 <span class="goal-target">${state.target}%</span> 위치에 멈춰 세우세요. (수평이면 멈춰요)`;
+    state.bal=20; state.tvel=0; state.tilt=0;
+    const wrap=document.createElement('div'); wrap.className='tube-wrap';
+    const tube=document.createElement('div'); tube.className='tube';
+    const tgt=document.createElement('div'); tgt.className='ttarget'; tgt.style.left=state.target+'%';
+    const ball=document.createElement('div'); ball.className='tball';
+    tube.append(tgt, ball); wrap.appendChild(tube); stage.appendChild(wrap);
+    const MAXDEG=18, K=200, FRIC=2, ENDR=0.4;
+    let dragging=false;
+    function setTiltFromY(e){ const r=wrap.getBoundingClientRect();
+      const rel=((e.clientY-r.top)/r.height-0.5)*2;            // 세로 드래그로 기울기: 아래=+, 위=−
+      state.tilt=Math.max(-1,Math.min(1,rel))*MAXDEG; }
+    wrap.addEventListener('pointerdown',e=>{ dragging=true; wrap.setPointerCapture(e.pointerId); setTiltFromY(e); });
+    wrap.addEventListener('pointermove',e=>{ if(dragging) setTiltFromY(e); });
+    const end=()=>dragging=false; wrap.addEventListener('pointerup',end); wrap.addEventListener('pointercancel',end);
+    let last=performance.now();
+    function loop(t){ const dt=Math.min(0.032,(t-last)/1000); last=t;
+      if(!dragging) state.tilt*=Math.pow(0.02,dt);              // 손 떼면 수평으로 복귀
+      const rad=state.tilt*Math.PI/180;
+      state.tvel += K*Math.sin(rad)*dt;                         // 기운 쪽으로 가속
+      state.tvel -= state.tvel*FRIC*dt;                         // 마찰(수평이면 곧 정지)
+      state.bal += state.tvel*dt;
+      if(state.bal<0){ state.bal=0; state.tvel=-state.tvel*ENDR; }
+      if(state.bal>100){ state.bal=100; state.tvel=-state.tvel*ENDR; }
+      tube.style.transform=`rotate(${state.tilt}deg)`;
+      ball.style.left=state.bal+'%';
+      setReadout(state.bal);
+      rafId=requestAnimationFrame(loop);
+    }
+    rafId=requestAnimationFrame(loop);
+  },
+  getDisplay(){ return state.bal; }
+},
+/* LV.10 펌프 — 손잡이를 위아래로 드래그해 공기압을 채움, 계속 새어나감 */{
+  name:'LV.6 펌프',
+  pass:'바람 넣느라 팔 빠지는 줄 알았죠?',
+  build(){
+    goalEl.innerHTML=`T손잡이를 아래로 펌프질(1회 +2)해 <span class="goal-target">${state.target}%</span>까지. (계속 새어 나갑니다)`;
+    state.air=0;
+    const box=document.createElement('div'); box.className='pump2';
+    box.innerHTML=`<div class="p-handle"><div class="p-bar"></div><div class="p-shaft"></div></div>
+      <div class="p-cyl"><div class="p-fill"></div><div class="p-num">0</div></div>`;
+    stage.appendChild(box);
+    const handle=box.querySelector('.p-handle'), fill=box.querySelector('.p-fill'), num=box.querySelector('.p-num');
+    const MAX_STROKE=58;
+    let dragging=false, lastY=0, hy=0, armed=true;
+    handle.addEventListener('pointerdown',e=>{ dragging=true; lastY=e.clientY; handle.setPointerCapture(e.pointerId); });
+    handle.addEventListener('pointermove',e=>{ if(!dragging)return; const dy=e.clientY-lastY; lastY=e.clientY;
+      hy=Math.max(0,Math.min(MAX_STROKE,hy+dy)); handle.style.transform=`translateX(-50%) translateY(${hy}px)`;
+      if(armed && hy>=MAX_STROKE*0.75){ state.air=Math.min(100, state.air+2); armed=false; }  // 펌프질 1회 = +2
+      if(hy<=MAX_STROKE*0.25) armed=true;                                                       // 위로 올리면 재장전
+    });
+    const end=()=>dragging=false; handle.addEventListener('pointerup',end); handle.addEventListener('pointercancel',end);
+    let last=performance.now();
+    function loop(t){ const dt=(t-last)/1000; last=t;
+      state.air=Math.max(0, state.air - 5*dt);   // 바람 빠짐
+      if(!dragging && hy>0){ hy=Math.max(0,hy-MAX_STROKE*4*dt);
+        handle.style.transform=`translateX(-50%) translateY(${hy}px)`; }   // 손잡이 복귀
+      fill.style.height=state.air+'%'; num.textContent=Math.round(state.air);
+      setReadout(state.air);
+      rafId=requestAnimationFrame(loop);
+    }
+    rafId=requestAnimationFrame(loop);
+  },
+  getDisplay(){ return state.air; }
+},
+/* LV.12 공쏟기 — 통 안의 공 개수 = 볼륨 (물리 시뮬레이션) */{
+  name:'LV.7 공쏟기',
+  pass:'공 개수까지 맞추다니… 집착이 예술이에요.',
+  build(){
+    goalEl.innerHTML=`통 안의 공 개수를 <span class="goal-target">${state.target}</span>개로 맞추세요. (100개 넘으면 넘쳐요)`;
+    const wrap=document.createElement('div'); wrap.className='balls';
+    const cv=document.createElement('canvas'); cv.width=300; cv.height=210; wrap.appendChild(cv);
+    const valve=document.createElement('button'); valve.className='btn'; valve.textContent='🚰 밸브 (한 번 누를 때마다 공 투입)';
+    stage.append(wrap, valve);
+    const ctx=cv.getContext('2d'), W=cv.width, H=cv.height;
+    const box={x:96,y:60,w:108,h:140}, R=5, G=560, REST=0.2, CAP=100, MAXV=520;
+    state.balls=[];
+    function spawn(){ if(state.balls.length<260) state.balls.push({x:box.x+R+Math.random()*(box.w-2*R), y:box.y+R+2, vx:(Math.random()-.5)*40, vy:20}); }
+    // 누르고 있어도 더 안 나오고, 한 번 누를 때마다 한 개씩만 투입
+    valve.addEventListener('click', spawn);
+    let last=performance.now();
+    function loop(t){ const dt=Math.min(0.032,(t-last)/1000); last=t;
+      const b=state.balls;
+      const lid = b.length<=CAP;          // 100개 이하면 윗면이 막혀 넘치지 않음, 초과 시 윗면 열려 넘침
+      for(const o of b){
+        o.vy+=G*dt; o.x+=o.vx*dt; o.y+=o.vy*dt;
+        if(lid){                          // 100개 이하: 완전 밀폐 → 절대 새지 않음
+          if(o.x<box.x+R){ o.x=box.x+R; o.vx=-o.vx*REST; }
+          if(o.x>box.x+box.w-R){ o.x=box.x+box.w-R; o.vx=-o.vx*REST; }
+          if(o.y>box.y+box.h-R){ o.y=box.y+box.h-R; o.vy=-o.vy*REST; o.vx*=0.98; }
+          if(o.y<box.y+R){ o.y=box.y+R; if(o.vy<0) o.vy=-o.vy*REST; }   // 윗면 뚜껑(넘침 방지)
+        } else {                          // 100개 초과: 윗면 열림 → 넘쳐 흐름
+          const inX=o.x>box.x && o.x<box.x+box.w;
+          if(inX && o.y>box.y){
+            if(o.x<box.x+R){ o.x=box.x+R; o.vx=-o.vx*REST; }
+            if(o.x>box.x+box.w-R){ o.x=box.x+box.w-R; o.vx=-o.vx*REST; }
+            if(o.y>box.y+box.h-R){ o.y=box.y+box.h-R; o.vy=-o.vy*REST; o.vx*=0.98; }
+          }
+        }
+      }
+      // 공끼리 충돌(분리) — 안정성을 위해 2회 이완
+      for(let pass=0; pass<2; pass++)
+      for(let i=0;i<b.length;i++) for(let j=i+1;j<b.length;j++){
+        const a=b[i],c=b[j], dx=c.x-a.x, dy=c.y-a.y, dd=dx*dx+dy*dy, min=2*R;
+        if(dd<min*min && dd>0){ const dist=Math.sqrt(dd), ov=(min-dist)/2, nx=dx/dist, ny=dy/dist;
+          a.x-=nx*ov; a.y-=ny*ov; c.x+=nx*ov; c.y+=ny*ov;
+          const dvx=c.vx-a.vx, dvy=c.vy-a.vy, p=(dvx*nx+dvy*ny)*REST;
+          if(p<0){ a.vx+=p*nx; a.vy+=p*ny; c.vx-=p*nx; c.vy-=p*ny; } }
+      }
+      // 감쇠 + 속도 제한 + 잠재우기 → 쌓인 공이 날뛰지 않고 가라앉음
+      for(const o of b){
+        o.vx*=0.94; o.vy*=0.97;
+        const sp=Math.hypot(o.vx,o.vy);
+        if(sp>MAXV){ o.vx*=MAXV/sp; o.vy*=MAXV/sp; }   // 폭발 방지(과밀 스폰 시)
+        if(sp<6){ o.vx*=0.4; o.vy*=0.4; }              // 느린 공은 빠르게 정지
+      }
+      state.balls=b.filter(o=>o.y<H+30 && o.x>-30 && o.x<W+30);
+      let cnt=0; for(const o of state.balls) if(o.x>box.x&&o.x<box.x+box.w&&o.y>box.y&&o.y<box.y+box.h) cnt++;
+      state.count=cnt; setReadout(cnt);
+      // draw
+      ctx.clearRect(0,0,W,H);
+      ctx.strokeStyle='#7fd0ff'; ctx.lineWidth=3;
+      ctx.beginPath(); ctx.moveTo(box.x,box.y); ctx.lineTo(box.x,box.y+box.h);
+      ctx.lineTo(box.x+box.w,box.y+box.h); ctx.lineTo(box.x+box.w,box.y); ctx.stroke();
+      ctx.fillStyle='#ffcc33';
+      for(const o of state.balls){ ctx.beginPath(); ctx.arc(o.x,o.y,R,0,7); ctx.fill(); }
+      rafId=requestAnimationFrame(loop);
+    }
+    rafId=requestAnimationFrame(loop);
+  },
+  getDisplay(){ return state.count||0; }
+},
+/* LV.15 타이밍 잠금 — 좌우로 휙휙 지나가는 마커를 목표에서 멈추기 */{
+  name:'LV.8 타이밍',
+  pass:'반사신경 인정합니다.',
+  build(){
+    goalEl.innerHTML=`움직이는 마커를 <span class="goal-target">${state.target}%</span>에서 멈추세요.`;
+    state.sweep=0; state.dir=1; state.frozen=false;
+    const bar=document.createElement('div'); bar.className='timing';
+    const tgt=document.createElement('div'); tgt.className='ctarget'; tgt.style.left='calc('+state.target+'% - 2px)';
+    const mark=document.createElement('div'); mark.className='cmark';
+    bar.append(tgt, mark); stage.appendChild(bar);
+    const lock=document.createElement('button'); lock.className='btn'; lock.textContent='⏹ 멈추기 / 다시';
+    lock.onclick=()=>{ state.frozen=!state.frozen; setReadout(state.sweep); };
+    stage.appendChild(lock);
+    let last=performance.now();
+    function loop(t){ const dt=Math.min(0.05,(t-last)/1000); last=t;
+      if(!state.frozen){ state.sweep+=state.dir*70*dt;
+        if(state.sweep>=100){ state.sweep=100; state.dir=-1; }
+        if(state.sweep<=0){ state.sweep=0; state.dir=1; } }
+      mark.style.left='calc('+state.sweep+'% - 2px)';
+      setReadout(state.sweep);
+      rafId=requestAnimationFrame(loop);
+    }
+    rafId=requestAnimationFrame(loop);
+  },
+  getDisplay(){ return state.sweep; }
+},
+/* LV.14 포대 — 포트리스식 대포: 누르는 동안 파워 충전, 떼면 발사, 날아간 거리=볼륨 */{
+  name:'LV.9 포대',
+  pass:'포격술 한번 끝내주네요. 💥',
+  fail:'착탄 지점이 빗나갔어요. 파워를 조절해 다시 쏘세요.',
+  win(d){ return d!=null && Math.abs(d-state.target)<=2; },   // 물리 발사라 ±2% 허용
+  build(){
+    goalEl.innerHTML=`대포를 쏴 포탄을 <span class="goal-target">${state.target}%</span> 거리에 떨어뜨리세요. (누르면 충전, 떼면 발사)`;
+    state.cannon=0;
+    const wrap=document.createElement('div'); wrap.className='cannon';
+    const cv=document.createElement('canvas'); cv.width=300; cv.height=190;
+    const tip=document.createElement('div'); tip.className='hintline'; tip.textContent='💥 캔버스를 누른 채로 파워를 모았다가 손을 떼세요';
+    wrap.append(cv, tip); stage.append(wrap);
+    const ctx=cv.getContext('2d'), W=cv.width, H=cv.height;
+    const G=420, gy=H-22, cx=30, maxDist=W-cx-22, K=Math.sqrt(maxDist*G); // 파워100=최대사거리
+    let power=0, charging=false, ball=null, settled=false;
+    function fire(){
+      if(!charging) return; charging=false;
+      const v0=(power/100)*K, a=Math.PI/4;            // 45도 고정 발사각
+      ball={x:cx, y:gy-14, vx:v0*Math.cos(a), vy:-v0*Math.sin(a)};
+      settled=false;
+    }
+    cv.addEventListener('pointerdown',e=>{ cv.setPointerCapture(e.pointerId); charging=true; power=0; ball=null; });
+    cv.addEventListener('pointerup',fire); cv.addEventListener('pointercancel',fire);
+    let last=performance.now();
+    function loop(t){ const dt=Math.min(0.032,(t-last)/1000); last=t;
+      if(charging){ power=Math.min(100, power+85*dt); }       // 누르는 동안 충전(약 1.2초에 만충)
+      if(ball && !settled){
+        ball.vy+=G*dt; ball.x+=ball.vx*dt; ball.y+=ball.vy*dt;
+        if(ball.y>=gy-3){ ball.y=gy-3; settled=true;
+          const dist=Math.max(0,Math.min(maxDist, ball.x-cx));
+          state.cannon=dist/maxDist*100; setReadout(state.cannon);   // 날아간 거리 = 볼륨
+        }
+      }
+      // draw
+      ctx.clearRect(0,0,W,H);
+      // 지면
+      ctx.fillStyle='#2a4d2a'; ctx.fillRect(0,gy,W,H-gy);
+      ctx.strokeStyle='#5fa05f'; ctx.beginPath(); ctx.moveTo(0,gy); ctx.lineTo(W,gy); ctx.stroke();
+      // 목표 깃발
+      const tx=cx+state.target/100*maxDist;
+      ctx.strokeStyle='#ffcc33'; ctx.lineWidth=2;
+      ctx.beginPath(); ctx.moveTo(tx,gy); ctx.lineTo(tx,gy-34); ctx.stroke();
+      ctx.fillStyle='#ffcc33'; ctx.beginPath(); ctx.moveTo(tx,gy-34); ctx.lineTo(tx+16,gy-28); ctx.lineTo(tx,gy-22); ctx.fill();
+      // 대포(45도 포신)
+      ctx.save(); ctx.translate(cx,gy-6); ctx.rotate(-Math.PI/4);
+      ctx.fillStyle='#888'; ctx.fillRect(0,-5,26,10); ctx.restore();
+      ctx.fillStyle='#555'; ctx.beginPath(); ctx.arc(cx,gy-4,9,0,7); ctx.fill();
+      // 파워 게이지
+      ctx.fillStyle='#222'; ctx.fillRect(8,8,14,90);
+      ctx.fillStyle=power<70?'#3aa856':'#cc3030'; ctx.fillRect(8,8+90*(1-power/100),14,90*(power/100));
+      ctx.strokeStyle='#aaa'; ctx.lineWidth=1; ctx.strokeRect(8,8,14,90);
+      // 포탄
+      if(ball){ ctx.fillStyle='#ffee88'; ctx.beginPath(); ctx.arc(ball.x,ball.y,5,0,7); ctx.fill(); }
+      rafId=requestAnimationFrame(loop);
+    }
+    rafId=requestAnimationFrame(loop);
+  },
+  getDisplay(){ return state.cannon; }
 }
 ];
 /* (LV.15 볼륨 몬스터 보스 — 삭제됨. 마지막 레벨 통과 시 바로 엔딩) */
@@ -702,7 +996,7 @@ function showEnding(){
     + '<span class="ptext">CLEAR!</span>';
   goalEl.textContent='';
   readoutEl.className='readout';
-  readoutEl.innerHTML='🔇';
+  readoutEl.innerHTML='<div class="player-off">🔇</div>';
   stage.innerHTML='';
   const e=document.createElement('div'); e.className='ending';
   e.innerHTML=`<div class="shutdown">
@@ -721,13 +1015,15 @@ function showEnding(){
 }
 
 /* ============ 레벨 로딩 ============ */
-function loadLevel(idx){
+function loadLevel(idx, keepTarget){
   if(level && level.cleanup) try{ level.cleanup(); }catch(e){}
   clearRaf();
   state = {};
   level = LEVELS[idx];
   state.levelIndex = idx;
-  state.target = level.fixedTarget != null ? level.fixedTarget : pickTarget();  // 목표% 랜덤
+  // keepTarget(숫자)이 주어지면 목표를 유지(= 같은 레벨을 0으로 재시작), 아니면 새 목표
+  state.target = keepTarget != null ? keepTarget
+               : (level.fixedTarget != null ? level.fixedTarget : pickTarget());  // 목표% 랜덤
   setAccentHue(idx, LEVELS.length);
   playBgmFor(idx);   // 레벨마다 다른 BGM 반복재생
   // UI 리셋
@@ -737,8 +1033,9 @@ function loadLevel(idx){
   goalEl.innerHTML=`볼륨을 <span class="goal-target">${state.target}%</span>에 맞추고 확인을 누르세요.`;
   stage.innerHTML='';
   tauntEl.textContent=''; tauntEl.className='taunt';
-  readoutEl.innerHTML='0<small>%</small>';
-  readoutEl.className='readout';
+  buildPlayer();
+  vtickEl.style.left = state.target + '%';   // VU 미터 위 목표 지점 표식
+  updateMeter(0);
   badge.textContent=level.name;
   badge.classList.remove('pop'); void badge.offsetWidth; badge.classList.add('pop');
   updateProgress(idx);
@@ -768,6 +1065,13 @@ confirmBtn.addEventListener('click', ()=>{
     state.fails = (state.fails||0) + 1;     // 3번 이상 실패하면 힌트 노출
     if(state.fails >= 3) showHint();
   }
+});
+
+/* 볼륨 0으로 초기화: 목표는 그대로 두고 현재 레벨만 처음 상태로 되돌림 */
+document.getElementById('resetVol').addEventListener('click', ()=>{
+  if(!level) return;
+  loadLevel(state.levelIndex, state.target);
+  taunt('볼륨을 0으로 되돌렸어요.', '');
 });
 
 /* 통과 → 다음 레벨/엔딩 */
